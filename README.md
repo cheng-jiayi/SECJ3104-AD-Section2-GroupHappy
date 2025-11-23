@@ -47,7 +47,8 @@
 <tr>
 <th>Sprint</th><th>Description</th><th>Contributor</th>
 </tr>
-<tr><ul>
+<td>1</td>
+  <td><ul>
       <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/SECJ3104%20AD%20-%20Project%20Proposal.pdf">Project Proposal</a></li>
       <li>Developed <b>Recycling Analytics  Module</b> (My Recycling Performance, Community Recycling Overview & Compare Performance pages).</li>
     </ul><td>Yap En Thong</td></tr>
