@@ -37,6 +37,7 @@
     <th>Module Name</th>
     <th>Frontend</th>
     <th>Backend</th>
+     <th>Model</th>
   </tr>
 
   <tr>
@@ -70,6 +71,7 @@
     <th>Module Name</th>
     <th>Frontend</th>
     <th>Backend</th>
+     <th>Model</th>
   </tr>
 
   <tr>
@@ -104,6 +106,7 @@
     <th>Module Name</th>
     <th>Frontend</th>
     <th>Backend</th>
+     <th>Model</th>
   </tr>
 
   <tr>
