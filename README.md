@@ -10,6 +10,7 @@
     <th>Module Name</th>
     <th>Frontend</th>
     <th>Backend</th>
+    <th>Model</th>
   </tr>
 
   <tr>
@@ -22,6 +23,7 @@
   <tr><td>2</td><td></td><td>Cheng Jia Yi</td><td>Cheng Jia Yi</td></tr>
   <tr><td>3</td><td></td><td>Cheng Jia Yi</td><td>Cheng Jia Yi</td></tr>
   <tr><td>4</td><td></td><td>Cheng Jia Yi</td><td>Cheng Jia Yi</td></tr>
+  <tr><td>5</td><td></td><td>Cheng Jia Yi</td><td>Cheng Jia Yi</td></tr>
 </table>
 
 
@@ -54,6 +56,7 @@
   <tr><td>2</td><td></td><td>Ong Ya Sian</td><td>Ong Ya Sian</td></tr>
   <tr><td>3</td><td></td><td>Ong Ya Sian</td><td>Ong Ya Sian</td></tr>
   <tr><td>4</td><td></td><td>Ong Ya Sian</td><td>Ong Ya Sian</td></tr>
+  <tr><td>5</td><td></td><td>Ong Ya Sian</td><td>Ong Ya Sian</td></tr>
 </table>
 
 
@@ -87,6 +90,7 @@
   <tr><td>2</td><td></td><td>Wong Jia Xuan</td><td>Wong Jia Xuan</td></tr>
   <tr><td>3</td><td></td><td>Wong Jia Xuan</td><td>Wong Jia Xuan</td></tr>
   <tr><td>4</td><td></td><td>Wong Jia Xuan</td><td>Wong Jia Xuan</td></tr>
+    <tr><td>5</td><td></td><td>Wong Jia Xuan</td><td>Wong Jia Xuan</td></tr>
 </table>
 
 
@@ -120,4 +124,5 @@
   <tr><td>2</td><td></td><td>Yap En Thong</td><td>Yap En Thong</td></tr>
   <tr><td>3</td><td></td><td>Yap En Thong</td><td>Yap En Thong</td></tr>
   <tr><td>4</td><td></td><td>Yap En Thong</td><td>Yap En Thong</td></tr>
+  <tr><td>5</td><td></td><td>Yap En Thong</td><td>Yap En Thong</td></tr>
 </table>
