@@ -114,7 +114,6 @@
     <td>
       Recycling Analytics Module
       <ul>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/SECJ3104%20AD%20-%20Project%20Proposal.pdf">Project Proposal</a></li>
         <li>My Recycling Performance</li>
         <li>Community Recycling Overview</li>
         <li>Compare Performance</li>
