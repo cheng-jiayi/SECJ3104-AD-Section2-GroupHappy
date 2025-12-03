@@ -1,64 +1,123 @@
-# SECJ3104-AD-Section2-GroupHappy
+<h1>SECJ3104-AD-Section2-GroupHappy</h1>
+
+<!-- ========================= -->
+<!-- Cheng Jia Yi -->
+<!-- ========================= -->
 <h2>Cheng Jia Yi's Contributions</h2>
 <table border="1">
-<tr>
-<th>Sprint</th><th>Description</th><th>Contributor</th>
-</tr>
-<tr><td>1</td><td><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/SECJ3104%20AD%20-%20Project%20Proposal.pdf">Project Proposal</a></td><td>Cheng Jia Yi</td></tr>
-<tr><td>2</td><td></td><td>Cheng Jia Yi</td></tr>
-<tr><td>3</td><td></td><td>Cheng Jia Yi</td></tr>
-<tr><td>4</td><td></td><td>Cheng Jia Yi</td></tr>
+  <tr>
+    <th>Sprint</th>
+    <th>Module Name</th>
+    <th>Frontend</th>
+    <th>Backend</th>
+  </tr>
+
+  <tr>
+    <td>1</td>
+    <td><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/SECJ3104%20AD%20-%20Project%20Proposal.pdf">Project Proposal</a></td>
+    <td>Cheng Jia Yi</td>
+    <td>Cheng Jia Yi</td>
+  </tr>
+
+  <tr><td>2</td><td></td><td>Cheng Jia Yi</td><td>Cheng Jia Yi</td></tr>
+  <tr><td>3</td><td></td><td>Cheng Jia Yi</td><td>Cheng Jia Yi</td></tr>
+  <tr><td>4</td><td></td><td>Cheng Jia Yi</td><td>Cheng Jia Yi</td></tr>
 </table>
 
+
+<!-- ========================= -->
+<!-- Ong Ya Sian -->
+<!-- ========================= -->
 <h2>Ong Ya Sian's Contributions</h2>
 <table border="1">
-<tr>
-<th>Sprint</th><th>Description</th><th>Contributor</th>
-</tr>
-<tr><td>1</td>
-<td><ul>
-      <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/SECJ3104%20AD%20-%20Project%20Proposal.pdf">Project Proposal</a></li>
-      <li>Developed <b>Event Management Module</b> (Register, edit and delete event).</li>
-      <li>Integrated mySQL Workbench for event management.</li>
-    </ul>
-<td>Ong Ya Sian</td></tr>
-<tr><td>2</td><td></td><td>Ong Ya Sian</td></tr>
-<tr><td>3</td><td></td><td>Ong Ya Sian</td></tr>
-<tr><td>4</td><td></td><td>Ong Ya Sian</td></tr>
+  <tr>
+    <th>Sprint</th>
+    <th>Module Name</th>
+    <th>Frontend</th>
+    <th>Backend</th>
+  </tr>
+
+  <tr>
+    <td>1</td>
+    <td>
+      Event Management Module  
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/SECJ3104%20AD%20-%20Project%20Proposal.pdf">Project Proposal</a></li>
+        <li>Register, edit, delete event</li>
+        <li>mySQL Workbench Integration</li>
+      </ul>
+    </td>
+    <td>Ong Ya Sian</td>
+    <td>Ong Ya Sian</td>
+  </tr>
+
+  <tr><td>2</td><td></td><td>Ong Ya Sian</td><td>Ong Ya Sian</td></tr>
+  <tr><td>3</td><td></td><td>Ong Ya Sian</td><td>Ong Ya Sian</td></tr>
+  <tr><td>4</td><td></td><td>Ong Ya Sian</td><td>Ong Ya Sian</td></tr>
 </table>
 
+
+<!-- ========================= -->
+<!-- Wong Jia Xuan -->
+<!-- ========================= -->
 <h2>Wong Jia Xuan's Contributions</h2>
 <table border="1">
-<tr>
-<th>Sprint</th><th>Description</th><th>Contributor</th>
-</tr>
-<tr>
-  <td>1</td>
-  <td>
-    <ul>
-      <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/SECJ3104%20AD%20-%20Project%20Proposal.pdf">Project Proposal</a></li>
-      <li>Developed <b>SmartScanner Module</b> (Scan Items and Correct Scan pages).</li>
-      <li>Integrated Firebase Firestore and Storage for image and scan data management.</li>
-    </ul>
-  </td>
-  <td>Wong Jia Xuan</td>
-</tr>
-<tr><td>2</td><td></td><td>Wong Jia Xuan</td></tr>
-<tr><td>3</td><td></td><td>Wong Jia Xuan</td></tr>
-<tr><td>4</td><td></td><td>Wong Jia Xuan</td></tr>
+  <tr>
+    <th>Sprint</th>
+    <th>Module Name</th>
+    <th>Frontend</th>
+    <th>Backend</th>
+  </tr>
+
+  <tr>
+    <td>1</td>
+    <td>
+      SmartScanner Module
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/SECJ3104%20AD%20-%20Project%20Proposal.pdf">Project Proposal</a></li>
+        <li>Scan Items</li>
+        <li>Correct Scan pages</li>
+        <li>Firebase Firestore & Storage Integration</li>
+      </ul>
+    </td>
+    <td>Wong Jia Xuan</td>
+    <td>Wong Jia Xuan</td>
+  </tr>
+
+  <tr><td>2</td><td></td><td>Wong Jia Xuan</td><td>Wong Jia Xuan</td></tr>
+  <tr><td>3</td><td></td><td>Wong Jia Xuan</td><td>Wong Jia Xuan</td></tr>
+  <tr><td>4</td><td></td><td>Wong Jia Xuan</td><td>Wong Jia Xuan</td></tr>
 </table>
 
+
+<!-- ========================= -->
+<!-- Yap En Thong -->
+<!-- ========================= -->
 <h2>Yap En Thong's Contributions</h2>
 <table border="1">
-<tr>
-<th>Sprint</th><th>Description</th><th>Contributor</th>
-</tr>
-<td>1</td>
-  <td><ul>
-      <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/SECJ3104%20AD%20-%20Project%20Proposal.pdf">Project Proposal</a></li>
-      <li>Developed <b>Recycling Analytics  Module</b> (My Recycling Performance, Community Recycling Overview & Compare Performance pages).</li>
-    </ul><td>Yap En Thong</td></tr>
-<tr><td>2</td><td></td><td>Yap En Thong</td></tr>
-<tr><td>3</td><td></td><td>Yap En Thong</td></tr>
-<tr><td>4</td><td></td><td>Yap En Thong</td></tr>
+  <tr>
+    <th>Sprint</th>
+    <th>Module Name</th>
+    <th>Frontend</th>
+    <th>Backend</th>
+  </tr>
+
+  <tr>
+    <td>1</td>
+    <td>
+      Recycling Analytics Module
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/SECJ3104%20AD%20-%20Project%20Proposal.pdf">Project Proposal</a></li>
+        <li>My Recycling Performance</li>
+        <li>Community Recycling Overview</li>
+        <li>Compare Performance</li>
+      </ul>
+    </td>
+    <td>Yap En Thong</td>
+    <td>Yap En Thong</td>
+  </tr>
+
+  <tr><td>2</td><td></td><td>Yap En Thong</td><td>Yap En Thong</td></tr>
+  <tr><td>3</td><td></td><td>Yap En Thong</td><td>Yap En Thong</td></tr>
+  <tr><td>4</td><td></td><td>Yap En Thong</td><td>Yap En Thong</td></tr>
 </table>
