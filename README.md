@@ -16,8 +16,8 @@
   <tr>
     <td>1</td>
     <td><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/SECJ3104%20AD%20-%20Project%20Proposal.pdf">Project Proposal</a></td>
-    <td>Cheng Jia Yi</td>
-    <td>Cheng Jia Yi</td>
+    <td></td>
+    <td></td>
   </tr>
 
   <tr><td>2</td><td></td><td></td><td></td></tr>
@@ -50,8 +50,8 @@
         <li>mySQL Workbench Integration</li>
       </ul>
     </td>
-    <td>Ong Ya Sian</td>
-    <td>Ong Ya Sian</td>
+    <td></td>
+    <td></td>
   </tr>
 
   <tr><td>2</td><td></td><td></td><td></td></tr>
@@ -85,8 +85,8 @@
         <li>Firebase Firestore & Storage Integration</li>
       </ul>
     </td>
-    <td>Wong Jia Xuan</td>
-    <td>Wong Jia Xuan</td>
+    <td></td>
+    <td></td>
   </tr>
 
   <tr><td>2</td><td></td><td></td><td></td></tr>
