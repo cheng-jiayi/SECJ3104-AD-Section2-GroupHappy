@@ -71,7 +71,7 @@
     <th>Module Name</th>
     <th>Frontend</th>
     <th>Backend</th>
-     <th>Model</th>
+    <th>Model</th>
   </tr>
 
   <tr>
@@ -79,20 +79,53 @@
     <td>
       SmartScanner Module
       <ul>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/SECJ3104%20AD%20-%20Project%20Proposal.pdf">Project Proposal</a></li>
-        <li>Scan Items</li>
-        <li>Correct Scan pages</li>
-        <li>Firebase Firestore & Storage Integration</li>
+        <li>Scan recyclable items</li>
+        <li>Correct scan</li>
+        <li>Upload image</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Wong%20Jia%20Xuan/smartscanner.js">SmartScanner</a></li>
       </ul>
     </td>
     <td></td>
     <td></td>
   </tr>
 
-  <tr><td>2</td><td></td><td></td><td></td></tr>
-  <tr><td>3</td><td></td><td></td><td></td></tr>
-  <tr><td>4</td><td></td><td></td><td></td></tr>
-    <tr><td>5</td><td></td><td></td><td></td></tr>
+  <tr>
+    <td>2</td>
+    <td>
+      Campaign Analytics Module
+      <ul>
+        <li>View Campaign Analytics Dashboard</li>
+        <li>Compare Multiple Campaigns</li>
+        <li>Generate Campaign Insight Report/li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/campaignAnalytics.js">Campaign Analytics Dashboard</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/campaignComparison.js">Campaign Comparison</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/campaignDetail.js">Campaign Detail View</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/generateReport.js">Report Generation</a></li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/UTMReMerit_server/server.py">Flask Server (Python)</a></li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/Database/campaignAnalytics.sql">Database Schema & Queries</a></li>
+      </ul>
+    </td>
+  </tr>
+
+  <tr><td>3</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>4</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>5</td><td></td><td></td><td></td><td></td></tr>
 </table>
 
 
