@@ -100,7 +100,7 @@
       <ul>
         <li>View Campaign Analytics Dashboard</li>
         <li>Compare Multiple Campaigns</li>
-        <li>Generate Campaign Insight Report/li>
+        <li>Generate Campaign Insight Report</li>
       </ul>
     </td>
     <td>
