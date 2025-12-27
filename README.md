@@ -128,7 +128,6 @@
   <tr><td>5</td><td></td><td></td><td></td><td></td></tr>
 </table>
 
-
 <!-- ========================= -->
 <!-- Yap En Thong -->
 <!-- ========================= -->
@@ -139,7 +138,7 @@
     <th>Module Name</th>
     <th>Frontend</th>
     <th>Backend</th>
-     <th>Model</th>
+    <th>Model</th>
   </tr>
 
   <tr>
@@ -153,21 +152,51 @@
       </ul>
     </td>
     <td>
-      <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Yap%20En%20Thong/App.js">Recycling Analytics Dashboard</a></li>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Yap%20En%20Thong/App.js">Recycling Analytics Dashboard</a></li>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Yap%20En%20Thong/src/screens/CommunityOverviewScreen.js">Community Overview</a></li>
-        <li><a href=https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Yap%20En%20Thong/src/screens/MyPerformanceScreen.js>My Performance</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Yap%20En%20Thong/src/screens/MyPerformanceScreen.js">My Performance</a></li>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Yap%20En%20Thong/src/screens/ComparePerformanceScreen.js">Compare Performance</a></li>
-      </td>
-    <td><li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Yap%20En%20Thong/backend/server.js">Server (js)</a></li></td>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Yap%20En%20Thong/backend/server.js">Server (js)</a></li>
+      </ul>
+    </td>
     <td>
       <ul>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Yap%20En%20Thong/backend/database.sql">Database Schema & Queries</a></li>
-      </ul></td>
+      </ul>
+    </td>
   </tr>
 
-  <tr><td>2</td><td></td><td></td><td></td><td></td></tr>
-  <tr><td>3</td><td></td><td></td><td></td><td></td></tr>
-  <tr><td>4</td><td></td><td></td><td></td><td></td></tr>
-  <tr><td>5</td><td></td><td></td><td></td><td></td></tr>
-  
+  <tr>
+    <td>2</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
 </table>
