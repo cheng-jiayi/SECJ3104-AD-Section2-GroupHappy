@@ -153,8 +153,11 @@
       </ul>
     </td>
     <td>Menu: App.js & Screens: ../src/screens/fileName.js</td>
-    <td>../backend/database.sql</td>
-    <td></td>
+    <td><li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Yap%20En%20Thong/backend/server.js">Server (js)</a></li></td>
+    <td>
+      <ul>
+        <li><a href=<td>https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Yap%20En%20Thong/backend/database.sql">Database Schema & Queries</a></li>
+      </ul></td>
   </tr>
 
   <tr><td>2</td><td></td><td></td><td></td></tr>
