@@ -152,7 +152,8 @@
         <li>Compare Performance</li>
       </ul>
     </td>
-    <td></td>
+    <td>Menu: App.js & Screens: ../src/screens/fileName.js</td>
+    <td>../backend/database.sql</td>
     <td></td>
   </tr>
 
