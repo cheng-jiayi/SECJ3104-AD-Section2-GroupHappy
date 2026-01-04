@@ -178,13 +178,48 @@
     <td></td>
     <td></td>
   </tr>
+  
   <tr>
     <td>3</td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
+    <td>
+      Leaderboard and Reward Module (Campaigns & Events Subsystem)
+      <ul>
+        <li>UC35: View Weekly Leaderboard</li>
+        <li>UC36: Manage Reward Points</li>
+        <li>UC37: Admin - Approve/Reject Merit Conversions</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/UTM_ReMerit/App.js">Main Application Entry & Navigation</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/UTM_ReMerit/src/screens/LeaderboardScreen.js">Leaderboard Screen (UC35)</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/UTM_ReMerit/src/screens/RewardPointsScreen.js">Reward Points Screen (UC36)</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/UTM_ReMerit/src/screens/ManageConversionsScreen.js">Manage Conversions Screen (UC37)</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/UTM_ReMerit/src/context/AppContext.js">Global State Management (Context API)</a></li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/server.js">Express.js REST API Server</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/package.json">Backend Dependencies & Configuration</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/routes/">API Routes:
+          <ul>
+            <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/routes/leaderboardRoutes.js">Leaderboard Routes</a></li>
+            <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/routes/rewardRoutes.js">Reward Routes</a></li>
+            <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/routes/conversionRoutes.js">Conversion Routes</a></li>
+          </ul>
+        </a></li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/database/schema.sql">Database Schema for Leaderboard & Reward System</a></li>
+        <li>System Architecture Design</li>
+        <li>Data Flow Models for Real-time Updates</li>
+      </ul>
+    </td>
   </tr>
+  
   <tr>
     <td>4</td>
     <td></td>
@@ -192,6 +227,7 @@
     <td></td>
     <td></td>
   </tr>
+  
   <tr>
     <td>5</td>
     <td></td>
