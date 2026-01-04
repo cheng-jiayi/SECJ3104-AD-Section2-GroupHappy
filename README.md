@@ -191,7 +191,7 @@
     </td>
     <td>
       <ul>
-        <li><a href="[https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/UTM_ReMerit/App.js](https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/App.js)">Main Application Entry & Navigation</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/App.js">Main Application Entry & Navigation</a></li>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/UTM_ReMerit/src/screens/LeaderboardScreen.js">Leaderboard Screen (UC35)</a></li>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/UTM_ReMerit/src/screens/RewardPointsScreen.js">Reward Points Screen (UC36)</a></li>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/UTM_ReMerit/src/screens/ManageConversionsScreen.js">Manage Conversions Screen (UC37)</a></li>
