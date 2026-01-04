@@ -202,20 +202,18 @@
       <ul>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/server.js">Express.js REST API Server</a></li>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/package.json">Backend Dependencies & Configuration</a></li>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/routes/">API Routes:
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/tree/main/Sprint%203/Yap%20En%20Thong/backend/routes/">API Routes:
           <ul>
             <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/routes/leaderboardRoutes.js">Leaderboard Routes</a></li>
             <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/routes/rewardRoutes.js">Reward Routes</a></li>
-            <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/routes/conversionRoutes.js">Conversion Routes</a></li>
+            <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/routes/rewardRoutes.js">Conversion Routes</a></li>
           </ul>
         </a></li>
       </ul>
     </td>
     <td>
       <ul>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/database/schema.sql">Database Schema for Leaderboard & Reward System</a></li>
-        <li>System Architecture Design</li>
-        <li>Data Flow Models for Real-time Updates</li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/database.sql">Database Schema for Leaderboard & Reward System</a></li>
       </ul>
     </td>
   </tr>
