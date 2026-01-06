@@ -63,11 +63,12 @@
       <ul>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Ong%20Ya%20Sian/backend/index.js">index.js</a></li>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Ong%20Ya%20Sian/backend/routes/events.js">Routes : events.js</a></li>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Ong%20Ya%20Sian/backend/db.js"></a></li>
       </ul>
     </td>
     <td>
-      <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Ong%20Ya%20Sian/backend/event.sql">Database Schema</a></li>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Ong%20Ya%20Sian/backend/event.sql">Database Schema</a></li>
+      </ul>
     </td>
   </tr>
 
