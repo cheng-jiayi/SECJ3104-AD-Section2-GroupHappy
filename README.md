@@ -81,12 +81,9 @@
         <li>Report Bin Issue</li>
       </ul>
     </td>
-    
-    <td>
-    </td>
-    <td>
-    
-    </td></tr>
+    <td></td>
+    <td></td>
+  </tr>
   <tr>
     <td>3</td>
     <td>
