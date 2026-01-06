@@ -1,133 +1,3 @@
-<h1>SECJ3104-AD-Section2-GroupHappy</h1>
-
-<!-- ========================= -->
-<!-- Cheng Jia Yi -->
-<!-- ========================= -->
-<h2>Cheng Jia Yi's Contributions</h2>
-<table border="1">
-  <tr>
-    <th>Sprint</th>
-    <th>Module Name</th>
-    <th>Frontend</th>
-    <th>Backend</th>
-    <th>Model</th>
-  </tr>
-
-  <tr>
-    <td>1</td>
-    <td><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/SECJ3104%20AD%20-%20Project%20Proposal.pdf">Project Proposal</a></td>
-    <td></td>
-    <td></td>
-  </tr>
-
-  <tr><td>2</td><td></td><td></td><td></td></tr>
-  <tr><td>3</td><td></td><td></td><td></td></tr>
-  <tr><td>4</td><td></td><td></td><td></td></tr>
-  <tr><td>5</td><td></td><td></td><td></td></tr>
-</table>
-
-
-<!-- ========================= -->
-<!-- Ong Ya Sian -->
-<!-- ========================= -->
-<h2>Ong Ya Sian's Contributions</h2>
-<table border="1">
-  <tr>
-    <th>Sprint</th>
-    <th>Module Name</th>
-    <th>Frontend</th>
-    <th>Backend</th>
-     <th>Model</th>
-  </tr>
-
-  <tr>
-    <td>1</td>
-    <td>
-      Event Management Module  
-      <ul>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/SECJ3104%20AD%20-%20Project%20Proposal.pdf">Project Proposal</a></li>
-        <li>Register, edit, delete event</li>
-        <li>mySQL Workbench Integration</li>
-      </ul>
-    </td>
-    <td></td>
-    <td></td>
-  </tr>
-
-  <tr><td>2</td><td></td><td></td><td></td></tr>
-  <tr><td>3</td><td></td><td></td><td></td></tr>
-  <tr><td>4</td><td></td><td></td><td></td></tr>
-  <tr><td>5</td><td></td><td></td><td></td></tr>
-</table>
-
-
-<!-- ========================= -->
-<!-- Wong Jia Xuan -->
-<!-- ========================= -->
-<h2>Wong Jia Xuan's Contributions</h2>
-<table border="1">
-  <tr>
-    <th>Sprint</th>
-    <th>Module Name</th>
-    <th>Frontend</th>
-    <th>Backend</th>
-    <th>Model</th>
-  </tr>
-
-  <tr>
-    <td>1</td>
-    <td>
-      SmartScanner Module
-      <ul>
-        <li>Scan recyclable items</li>
-        <li>Correct scan</li>
-        <li>Upload image</li>
-      </ul>
-    </td>
-    <td>
-      <ul>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Wong%20Jia%20Xuan/smartscanner.js">SmartScanner</a></li>
-      </ul>
-    </td>
-    <td></td>
-    <td></td>
-  </tr>
-
-  <tr>
-    <td>2</td>
-    <td>
-      Campaign Analytics Module
-      <ul>
-        <li>View Campaign Analytics Dashboard</li>
-        <li>Compare Multiple Campaigns</li>
-        <li>Generate Campaign Insight Report</li>
-      </ul>
-    </td>
-    <td>
-      <ul>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/campaignAnalytics.js">Campaign Analytics Dashboard</a></li>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/campaignComparison.js">Campaign Comparison</a></li>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/campaignDetail.js">Campaign Detail View</a></li>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/generateReport.js">Report Generation</a></li>
-      </ul>
-    </td>
-    <td>
-      <ul>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/UTMReMerit_server/server.py">Flask Server (Python)</a></li>
-      </ul>
-    </td>
-    <td>
-      <ul>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/Database/campaignAnalytics.sql">Database Schema & Queries</a></li>
-      </ul>
-    </td>
-  </tr>
-
-  <tr><td>3</td><td></td><td></td><td></td><td></td></tr>
-  <tr><td>4</td><td></td><td></td><td></td><td></td></tr>
-  <tr><td>5</td><td></td><td></td><td></td><td></td></tr>
-</table>
-
 <!-- ========================= -->
 <!-- Yap En Thong -->
 <!-- ========================= -->
@@ -172,36 +42,129 @@
   </tr>
 
   <tr>
-  <td>2</td>
-  <td>
-    Recycling Analytics Module (Refinements & Integration)
-    <ul>
-      <li>UC05: View My Recycling Performance</li>
-      <li>UC06: View Community Recycling Overview</li>
-      <li>UC07: Compare Performance</li>
-    </ul>
-  </td>
-  <td>
-    <ul>
-      <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/src/screens/RecyclingDashboardScreen.js">Enhanced Dashboard UI</a></li>
-      <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/src/components/PerformanceChart.js">Reusable Performance Chart Component</a></li>
-      <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/src/styles/analyticsStyles.js">Consolidated Stylesheet</a></li>
-    </ul>
-  </td>
-  <td>
-    <ul>
-      <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/backend/controllers/analyticsController.js">Analytics Business Logic (Controller)</a></li>
-      <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/backend/routes/analyticsRoutes.js">Dedicated API Routes for Analytics</a></li>
-      <li>Integration with main project backend</li>
-    </ul>
-  </td>
-  <td>
-    <ul>
-      <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/backend/database/analyticsQueries.sql">Optimized Analytics SQL Queries</a></li>
-      <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/backend/models/Analytics.js">Data Models (Sequelize/ORM)</a></li>
-    </ul>
-  </td>
-</tr>
+    <td>2</td>
+    <td>
+      <strong>Profile Management Module</strong>
+      <ul>
+        <li>UC23: View Profile (Student & Admin)</li>
+        <li>UC24: Update Profile Information</li>
+        <li>UC25: Manage Account Settings</li>
+      </ul>
+      <strong>Key Features:</strong>
+      <ul>
+        <li>Real-time data synchronization</li>
+        <li>Role-based access control (Student/Admin)</li>
+        <li>Profile picture upload (Camera/Gallery)</li>
+        <li>Notification preferences management</li>
+        <li>Cross-screen event synchronization</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/src/screens/StudentProfile.js">Student Profile Screen (UC23)</a>
+          <ul>
+            <li>Profile view with editable fields</li>
+            <li>Real-time edit mode toggling</li>
+            <li>Profile image picker integration</li>
+            <li>Contribution statistics display</li>
+            <li>Role-based field edit permissions</li>
+          </ul>
+        </li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/src/screens/StudentList.js">Student List Screen (Admin)</a>
+          <ul>
+            <li>Searchable student directory</li>
+            <li>Add new student functionality</li>
+            <li>Delete student with confirmation</li>
+            <li>Navigation to profile/account settings</li>
+            <li>Real-time list updates</li>
+          </ul>
+        </li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/src/screens/ManageAccountSettings.js">Manage Account Settings Screen (UC25)</a>
+          <ul>
+            <li>Password change functionality</li>
+            <li>Notification preferences toggle</li>
+            <li>Logout from all devices</li>
+            <li>Admin reset capabilities</li>
+            <li>AsyncStorage persistence</li>
+          </ul>
+        </li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/src/services/api.js">API Service Layer</a>
+          <ul>
+            <li>Global data store for real-time sync</li>
+            <li>Error handling with fallback data</li>
+            <li>DeviceEventEmitter integration</li>
+            <li>Unified API client</li>
+            <li>Validation utilities</li>
+          </ul>
+        </li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/App.js">Main App Navigation</a>
+          <ul>
+            <li>Stack navigation setup</li>
+            <li>Screen routing configuration</li>
+            <li>Role-based navigation flow</li>
+          </ul>
+        </li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/backend/server.js">Express.js Backend Server</a>
+          <ul>
+            <li>16 API endpoints for profile management</li>
+            <li>Transaction-based updates</li>
+            <li>Input validation middleware</li>
+            <li>Stored procedure integration</li>
+            <li>Error handling with fallback SQL</li>
+          </ul>
+        </li>
+        <li><strong>API Endpoints Implemented:</strong>
+          <ul>
+            <li>GET /api/profile/:userId - View profile</li>
+            <li>PUT /api/profile/:userId - Update profile</li>
+            <li>GET /api/students - List all students (Admin)</li>
+            <li>POST /api/students - Add new student</li>
+            <li>DELETE /api/student/:userId - Delete student</li>
+            <li>GET/PUT /api/account/:userId/notifications - Notification preferences</li>
+            <li>PUT /api/account/:userId/password - Change password</li>
+            <li>POST /api/account/:userId/reset-all - Reset all settings</li>
+            <li>GET /api/health - Health check</li>
+          </ul>
+        </li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/backend/utm_remerit.sql">Complete Database Schema</a>
+          <ul>
+            <li>7 core tables (User, Student, Admin, etc.)</li>
+            <li>2 comprehensive views (StudentProfileView, UserAccountSettings)</li>
+            <li>3 stored procedures with fallback logic</li>
+            <li>Database triggers for automation</li>
+            <li>10+ demo users with realistic data</li>
+          </ul>
+        </li>
+        <li><strong>Database Features:</strong>
+          <ul>
+            <li>Role-based user management</li>
+            <li>Notification preference tracking</li>
+            <li>Session management system</li>
+            <li>Password history tracking</li>
+            <li>UTMID format validation rules</li>
+            <li>Default settings configuration</li>
+          </ul>
+        </li>
+        <li><strong>Technical Implementation:</strong>
+          <ul>
+            <li>CASCADE delete constraints</li>
+            <li>Comprehensive indexing</li>
+            <li>Data type optimization</li>
+            <li>Stored procedure error handling</li>
+            <li>View-based data abstraction</li>
+          </ul>
+        </li>
+      </ul>
+    </td>
+  </tr>
   
   <tr>
     <td>3</td>
@@ -230,7 +193,7 @@
           <ul>
             <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/routes/leaderboardRoutes.js">Leaderboard Routes</a></li>
             <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/routes/rewardRoutes.js">Reward Routes</a></li>
-            <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/routes/rewardRoutes.js">Conversion Routes</a></li>
+            <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/routes/conversionRoutes.js">Conversion Routes</a></li>
           </ul>
         </a></li>
       </ul>
