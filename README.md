@@ -45,17 +45,34 @@
     <td>
       Event Management Module  
       <ul>
-        <li></li>
-        <li>Register, edit, delete event</li>
-        <li>mySQL Workbench Integration</li>
+        <li>Create Event</li>
+        <li>Edit / Update Event</li>
+        <li>Delete Event</li>
       </ul>
     </td>
     <td></td>
     <td></td>
   </tr>
 
-  <tr><td>2</td><td></td><td></td><td></td></tr>
-  <tr><td>3</td><td></td><td></td><td></td></tr>
+  <tr>
+    <td>2</td>
+    <td>
+      Eco Map Module
+      <ul>
+        <li>View Nearby Recycling Bins</li>
+        <li>Filter Items for Recycling</li>
+        <li>Get Directions to Recycling Station</li>
+        <li>Report Bin Issue</li>
+      </ul>
+    </td><td></td><td></td></tr>
+  <tr>
+    <td>3</td>
+    <td>
+      Advanced Analytics and Decision Support Module
+        <li>Predict Recycling Trends</li>
+        <li>Detect Low Engagement Areas</li>
+        <li>Generate Sustainability Insights & Recommendations</li>
+    </td><td></td><td></td></tr>
   <tr><td>4</td><td></td><td></td><td></td></tr>
   <tr><td>5</td><td></td><td></td><td></td></tr>
 </table>
