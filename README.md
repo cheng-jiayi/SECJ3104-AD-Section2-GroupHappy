@@ -1,5 +1,3 @@
-<img width="630" height="384" alt="image" src="https://github.com/user-attachments/assets/b6880586-2725-4eba-a2f1-45812884772c" /><h1>SECJ3104-AD-Section2-GroupHappy</h1>
-
 <!-- ========================= -->
 <!-- Cheng Jia Yi -->
 <!-- ========================= -->
