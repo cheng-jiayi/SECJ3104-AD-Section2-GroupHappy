@@ -201,7 +201,7 @@
     </td>
     <td>
       <ul>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/backend/utm_remerit.sql">Complete Database Schema</a>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/backend/database.sql">Complete Database Schema</a>
         </li>
       </ul>
     </td>
