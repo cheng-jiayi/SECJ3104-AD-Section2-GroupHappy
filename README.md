@@ -172,12 +172,36 @@
   </tr>
 
   <tr>
-    <td>2</td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-  </tr>
+  <td>2</td>
+  <td>
+    Recycling Analytics Module (Refinements & Integration)
+    <ul>
+      <li>UC05: View My Recycling Performance</li>
+      <li>UC06: View Community Recycling Overview</li>
+      <li>UC07: Compare Performance</li>
+    </ul>
+  </td>
+  <td>
+    <ul>
+      <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/src/screens/RecyclingDashboardScreen.js">Enhanced Dashboard UI</a></li>
+      <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/src/components/PerformanceChart.js">Reusable Performance Chart Component</a></li>
+      <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/src/styles/analyticsStyles.js">Consolidated Stylesheet</a></li>
+    </ul>
+  </td>
+  <td>
+    <ul>
+      <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/backend/controllers/analyticsController.js">Analytics Business Logic (Controller)</a></li>
+      <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/backend/routes/analyticsRoutes.js">Dedicated API Routes for Analytics</a></li>
+      <li>Integration with main project backend</li>
+    </ul>
+  </td>
+  <td>
+    <ul>
+      <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/backend/database/analyticsQueries.sql">Optimized Analytics SQL Queries</a></li>
+      <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/backend/models/Analytics.js">Data Models (Sequelize/ORM)</a></li>
+    </ul>
+  </td>
+</tr>
   
   <tr>
     <td>3</td>
