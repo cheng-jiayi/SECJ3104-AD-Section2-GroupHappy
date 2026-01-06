@@ -183,19 +183,19 @@
     </td>
     <td>
       <ul>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/src/screens/StudentProfile.js">Student Profile Screen (UC23)</a>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/src/screens/StudentProfile.js">Student Profile Screen (UC23)</a>
         </li>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/src/screens/StudentList.js">Student List Screen (Admin)</a>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/src/screens/StudentList.js">Student List Screen (Admin)</a>
         </li>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/src/screens/ManageAccountSettings.js">Manage Account Settings Screen (UC25)</a>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/src/screens/ManageAccountSettings.js">Manage Account Settings Screen (UC25)</a>
         </li>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/src/services/api.js">API Service Layer</a>
         </li>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/App.js">Main App Navigation</a>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/App.js">Main App Navigation</a>
     </td>
     <td>
       <ul>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/backend/server.js">Express.js Backend Server</a>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/backend/server.js">Express.js Backend Server</a>
         </li>
       </ul>
     </td>
