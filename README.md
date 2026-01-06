@@ -59,7 +59,7 @@
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Ong%20Ya%20Sian/frontend/src/screens/EditEvent.js">Edit Event</a></li>
       </ul>
     </td>
-    <td></td><td></td>
+    <td></td>
   </tr>
 
   <tr>
@@ -81,7 +81,8 @@
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Ong%20Ya%20Sian/frontend/src/screens/EditEvent.js">Edit Event</a></li>
       </ul>
     
-    <td></td><td></td></tr>
+    <td></td>
+    <td></td></tr>
   <tr>
     <td>3</td>
     <td>
