@@ -45,7 +45,7 @@
     <td>
       Event Management Module  
       <ul>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/SECJ3104%20AD%20-%20Project%20Proposal.pdf">Project Proposal</a></li>
+        <li></li>
         <li>Register, edit, delete event</li>
         <li>mySQL Workbench Integration</li>
       </ul>
