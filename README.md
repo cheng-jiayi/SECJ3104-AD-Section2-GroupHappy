@@ -84,7 +84,7 @@
     <td>
       <ul>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Ong%20Ya%20Sian/frontend/src/Ecomap/screens/EcoMapScreen.js">Eco Map Screen</a></li>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Ong%20Ya%20Sian/frontend/src/Ecomap/screens/ReportScreen.js">Re[ort Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Ong%20Ya%20Sian/frontend/src/Ecomap/screens/ReportScreen.js">Report Screen</a></li>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Ong%20Ya%20Sian/frontend/src/Ecomap/screens/FilterScreen.js">Filter Screen</a></li>
       </ul>
     </td>
@@ -108,7 +108,29 @@
         <li>Detect Low Engagement Areas</li>
         <li>Generate Sustainability Insights & Recommendations</li>
       </ul>
-    </td><td></td><td></td></tr>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Ong%20Ya%20Sian/frontend/src/DecisionMaking/screens/ModuleDashboard.js">Decision Making Dashboard</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Ong%20Ya%20Sian/frontend/src/DecisionMaking/screens/PredictTrends.js">Trends Prediction Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Ong%20Ya%20Sian/frontend/src/DecisionMaking/screens/EngagementAnalysis.js">Engagement Analysis</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Ong%20Ya%20Sian/frontend/src/DecisionMaking/screens/SustainabilityInsights.js">Sustainability Insights</a></li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Ong%20Ya%20Sian/backend/server.js">Server.js</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/tree/main/Sprint%203/Ong%20Ya%20Sian/backend/controllers">Controllers</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Ong%20Ya%20Sian/backend/models/advancedAnalyticsModel.js">Models</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Ong%20Ya%20Sian/backend/routes/advancedAnalyticsRoutes.js">Routes</a></li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Ong%20Ya%20Sian/backend/completeDatabaseSchema.sql">Complete Database Schema</a></li>
+      </ul>
+    </td>
+  </tr>
   <tr><td>4</td><td></td><td></td><td></td></tr>
   <tr><td>5</td><td></td><td></td><td></td></tr>
 </table>
