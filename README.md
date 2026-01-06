@@ -69,9 +69,11 @@
     <td>3</td>
     <td>
       Advanced Analytics and Decision Support Module
+      <ul>
         <li>Predict Recycling Trends</li>
         <li>Detect Low Engagement Areas</li>
         <li>Generate Sustainability Insights & Recommendations</li>
+      </ul>
     </td><td></td><td></td></tr>
   <tr><td>4</td><td></td><td></td><td></td></tr>
   <tr><td>5</td><td></td><td></td><td></td></tr>
