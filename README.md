@@ -50,7 +50,15 @@
         <li>Delete Event</li>
       </ul>
     </td>
-    <td></td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Ong%20Ya%20Sian/frontend/src/screens/HomeScreen.js">Home Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Ong%20Ya%20Sian/frontend/src/screens/AdminDashboard.js">Admin Dashboard</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Ong%20Ya%20Sian/frontend/src/screens/EventList.js">Event List</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Ong%20Ya%20Sian/frontend/src/screens/EventForm.js">Event Form</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Ong%20Ya%20Sian/frontend/src/screens/EditEvent.js">Edit Event</a></li>
+      </ul>
+    </td>
     <td></td>
   </tr>
 
