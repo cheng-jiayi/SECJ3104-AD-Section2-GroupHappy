@@ -173,10 +173,38 @@
 
   <tr>
     <td>2</td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
+    <td>
+      <strong>Profile Management Module</strong>
+      <ul>
+        <li>UC23: View Profile (Student & Admin)</li>
+        <li>UC24: Update Profile Information</li>
+        <li>UC25: Manage Account Settings</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/src/screens/StudentProfile.js">Student Profile Screen (UC23)</a>
+        </li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/src/screens/StudentList.js">Student List Screen (Admin)</a>
+        </li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/src/screens/ManageAccountSettings.js">Manage Account Settings Screen (UC25)</a>
+        </li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/src/services/api.js">API Service Layer</a>
+        </li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/App.js">Main App Navigation</a>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/backend/server.js">Express.js Backend Server</a>
+        </li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/UTM_ReMerit/backend/utm_remerit.sql">Complete Database Schema</a>
+        </li>
+      </ul>
+    </td>
   </tr>
   
   <tr>
@@ -202,7 +230,7 @@
       <ul>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/server.js">Express.js REST API Server</a></li>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/package.json">Backend Dependencies & Configuration</a></li>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/routes/">API Routes:
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/tree/main/Sprint%203/Yap%20En%20Thong/backend/routes/">API Routes:
           <ul>
             <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/routes/leaderboardRoutes.js">Leaderboard Routes</a></li>
             <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/routes/rewardRoutes.js">Reward Routes</a></li>
@@ -213,9 +241,7 @@
     </td>
     <td>
       <ul>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/database/schema.sql">Database Schema for Leaderboard & Reward System</a></li>
-        <li>System Architecture Design</li>
-        <li>Data Flow Models for Real-time Updates</li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Yap%20En%20Thong/backend/database.sql">Database Schema for Leaderboard & Reward System</a></li>
       </ul>
     </td>
   </tr>
