@@ -8,18 +8,87 @@
     <th>Module Name</th>
     <th>Frontend</th>
     <th>Backend</th>
-    <th>Model</th>
+     <th>Model</th>
   </tr>
 
   <tr>
     <td>1</td>
-    <td><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/SECJ3104%20AD%20-%20Project%20Proposal.pdf">Project Proposal</a></td>
-    <td></td>
-    <td></td>
+    <td>
+      Authentication and Authorisation Module
+      <ul>
+        <li>UC01 User Registration</li>
+        <li>UC02 User Login</li>
+        <li>UC03 Role-Based Access Control</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Cheng%20Jia%20Yi/userManagement/RegistrationScreen.js">User Registration</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Cheng%20Jia%20Yi/userManagement/LoginScreen.js">User Login</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Cheng%20Jia%20Yi/userManagement/HomeScreen.js">Home Screen</a></li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Cheng%20Jia%20Yi/backend/server.js">Authentication and Authorization Module Server</a></li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Cheng%20Jia%20Yi/backend/users.sql">MySQL SQL Script</a></li>
+      </ul>
+    </td>
   </tr>
-
-  <tr><td>2</td><td></td><td></td><td></td></tr>
-  <tr><td>3</td><td></td><td></td><td></td></tr>
+  
+  <tr>
+    <td>2</td>
+    <td>
+      Event Registration Module
+      <ul>
+        <li>UC13 View Available Events</li>
+        <li>UC14 Register for Event</li>
+        <li>UC15 Cancel Registration</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Cheng%20Jia%20Yi/eventRegistration/EventListScreen.js">Event List (View, Register, Unregister)</a></li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Cheng%20Jia%20Yi/backend/server.js">Event Registration Server</a></li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Cheng%20Jia%20Yi/backend/sprint2.sql">MySQL SQL Script</a></li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>
+      Contribution Tracking Module
+      <ul>
+        <li>UC26 Log Recycling Activity for Event</li>
+        <li>UC27 View Event Contribution Progress</li>
+        <li>UC28 Complete Event and Redeem Event Rewards</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+      </ul>
+    </td>
+    <td>
+      <ul>
+      </ul>
+    </td>
+    <td>
+      <ul>
+      </ul>
+    </td>
+  </tr>
   <tr><td>4</td><td></td><td></td><td></td></tr>
   <tr><td>5</td><td></td><td></td><td></td></tr>
 </table>
