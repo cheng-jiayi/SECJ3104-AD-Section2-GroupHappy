@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   RefreshControl
 } from 'react-native';
-import { getEvents, deleteEvent } from '../../services/api';
+import { getEvents, deleteEvent } from '../services/api';
 
 export default function EventList({ navigation }) {
   const [events, setEvents] = useState([]);
@@ -400,4 +400,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
+
 });
