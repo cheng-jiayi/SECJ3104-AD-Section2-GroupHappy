@@ -5,7 +5,6 @@ const fs = require('fs');
 const router = express.Router();
 const db = require('../db');
 
-// Configure multer for file uploads (we'll keep it for other endpoints)
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'uploads/');
@@ -32,7 +31,6 @@ const upload = multer({
   }
 });
 
-// GET all events
 router.get('/', async (req, res) => {
   try {
     const sql = `SELECT 
@@ -81,7 +79,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// CREATE Event with base64 image
 router.post('/create', async (req, res) => {
   try {
     console.log('📝 Received event creation request body:', req.body);
@@ -180,7 +177,6 @@ router.post('/create', async (req, res) => {
   }
 });
 
-// UPDATE Event with base64 image support
 router.put('/update/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -209,7 +205,6 @@ router.put('/update/:id', async (req, res) => {
 
     const currentEvent = checkResults[0];
     
-    // Handle base64 image if provided
     let eventImageURL = currentEvent.eventImageURL;
     if (eventImageBase64) {
       console.log('📷 Processing base64 image for update, size:', eventImageBase64.length);
@@ -221,7 +216,6 @@ router.put('/update/:id', async (req, res) => {
         const filename = `event-${uniqueSuffix}.jpg`;
         const filePath = path.join(__dirname, '../uploads', filename);
         
-        // Save the file
         fs.writeFileSync(filePath, imageBuffer);
         console.log('✅ Image saved to:', filePath);
         
@@ -314,5 +308,6 @@ router.delete('/delete/:id', async (req, res) => {
     });
   }
 });
+
 
 module.exports = router;
