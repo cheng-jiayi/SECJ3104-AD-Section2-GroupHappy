@@ -12,7 +12,7 @@ import {
   Image
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
-import { createEvent } from '../../services/api';
+import { createEvent } from '../services/api';
 
 export default function EventForm({ navigation }) {
   const [form, setForm] = useState({
@@ -413,4 +413,5 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: 5,
   }
+
 });
