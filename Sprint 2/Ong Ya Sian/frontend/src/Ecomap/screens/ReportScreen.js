@@ -114,12 +114,10 @@ const ReportScreen = ({ navigation, route }) => {
     setLoading(true);
     
     try {
-        // 尝试获取有效的 bin_id
         let validBinId = null;
         
         console.log('Checking bin ID from bin object:', bin);
         
-        // 尝试从不同字段获取 ID
         if (bin.bin_id && parseInt(bin.bin_id) > 0) {
             validBinId = parseInt(bin.bin_id);
             console.log('Found valid bin_id:', validBinId);
@@ -127,29 +125,29 @@ const ReportScreen = ({ navigation, route }) => {
             validBinId = parseInt(bin.id);
             console.log('Found valid id:', validBinId);
         } else if (bin.original_bin_id) {
-            // 如果是车站垃圾桶的原始ID，尝试解析
+
             if (typeof bin.original_bin_id === 'string') {
-                // 如果是字符串格式的ID
+      
                 const numId = parseInt(bin.original_bin_id);
                 if (!isNaN(numId) && numId > 0) {
                     validBinId = numId;
                     console.log('Found valid original_bin_id:', validBinId);
                 } else {
-                    // 如果是车站格式的ID，我们需要查询数据库找到对应的垃圾桶
+            
                     console.log('Searching for bin in database...');
                     try {
                         const searchResponse = await axios.get(`${API_BASE_URL}/api/bins/nearby`, {
                             params: {
                                 lat: bin.latitude,
                                 lng: bin.longitude,
-                                radius: 0.01 // 10米范围内
+                                radius: 0.01 
                             }
                         });
                         
                         const nearbyBins = searchResponse.data;
                         console.log('Nearby bins found:', nearbyBins);
                         
-                        // 查找类型匹配的垃圾桶
+             
                         const matchingBin = nearbyBins.find(b => 
                             b.type_name === bin.type_name && 
                             Math.abs(b.latitude - bin.latitude) < 0.001 &&
@@ -167,7 +165,7 @@ const ReportScreen = ({ navigation, route }) => {
             }
         }
         
-        // 检查是否有有效的 bin_id
+       
         if (!validBinId) {
             Alert.alert(
                 'Error', 
@@ -178,7 +176,7 @@ const ReportScreen = ({ navigation, route }) => {
             return;
         }
         
-        // 准备提交数据
+
         const reportData = {
             bin_id: validBinId,
             user_id: "1", // 必须是字符串
@@ -189,7 +187,7 @@ const ReportScreen = ({ navigation, route }) => {
 
         console.log('Submitting report data:', reportData);
         
-        // 发送请求
+
         const response = await axios.post(`${API_BASE_URL}/api/issues/report`, reportData, {
             headers: {
                 'Content-Type': 'application/json'
@@ -235,7 +233,6 @@ const ReportScreen = ({ navigation, route }) => {
     }
 };
 
-  // 如果没有 bin 数据，显示加载或错误
   if (!initialized) {
     return (
       <View style={styles.loadingContainer}>
@@ -616,5 +613,6 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
 },
 });
+
 
 export default ReportScreen;
