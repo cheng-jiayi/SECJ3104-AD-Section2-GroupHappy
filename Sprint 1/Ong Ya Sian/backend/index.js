@@ -30,6 +30,7 @@ app.use((req, res) => {
 const PORT = 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Backend server running on http://localhost:${PORT}`);
-  console.log(`📱 Access from emulator: http://10.0.2.2:${PORT}`); // ✅ CORRECT
+  console.log(`📱 Access from emulator: http://10.0.2.2:${PORT}`); 
   console.log(`📁 File uploads will be stored in: ${path.join(__dirname, 'uploads')}`);
+
 });
