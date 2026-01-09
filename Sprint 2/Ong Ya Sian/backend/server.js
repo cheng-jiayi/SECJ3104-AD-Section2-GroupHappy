@@ -9,22 +9,22 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// MySQL Connection Configuration - FIX DATABASE NAME
+
 const dbConfig = {
     host: 'localhost',
     user: 'root',
-    password: 'Hoo@790204',
-    database: 'ecomap',
+    password: '',
+    database: 'utm_remerit',
     charset: 'utf8mb4',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
 };
 
-// Create MySQL connection pool
+
 const pool = mysql.createPool(dbConfig);
 
-// Test database connection
+
 pool.getConnection((err, connection) => {
     if (err) {
         console.error('❌ MySQL Connection Error:', err.message);
@@ -34,20 +34,17 @@ pool.getConnection((err, connection) => {
     connection.release();
 });
 
-// API Health Check
 app.get('/', (req, res) => {
     res.json({ 
         message: 'EcoMap Backend API is running!',
         database_schema: 'Updated with STATIONS table',
         endpoints: {
-            // Bins
             getAllBins: 'GET /api/bins',
             getBinDetails: 'GET /api/bins/:id',
             getNearbyBins: 'GET /api/bins/nearby?lat=1.5585&lng=103.6378&radius=2',
             updateBinStatus: 'PUT /api/bins/:id/status',
             getBinTypes: 'GET /api/bins/types',
             
-            // Stations
             getAllStations: 'GET /api/stations',
             getStationDetails: 'GET /api/stations/:id',
             getStationBins: 'GET /api/stations/:id/bins',
@@ -55,20 +52,16 @@ app.get('/', (req, res) => {
             addBinToStation: 'POST /api/stations/:id/bins',
             findStationsWithTypes: 'POST /api/stations/find',
             
-            // Issues
             reportIssue: 'POST /api/issues/report',
             getRecentIssues: 'GET /api/issues/recent',
             
-            // Statistics
             getStatistics: 'GET /api/statistics',
             
-            // Testing (optional - comment out in production)
             testProcedure: 'GET /api/test/procedure'
         }
     });
 });
 
-// Get all bins (updated for new schema)
 app.get('/api/bins', (req, res) => {
     const query = `
         SELECT 
@@ -97,7 +90,6 @@ app.get('/api/bins', (req, res) => {
     });
 });
 
-// Get bin details by ID - ADD THIS ENDPOINT BACK
 app.get('/api/bins/:id', (req, res) => {
     const { id } = req.params;
     
@@ -133,7 +125,6 @@ app.get('/api/bins/:id', (req, res) => {
     });
 });
 
-// UC16: Get nearby bins
 app.get('/api/bins/nearby', (req, res) => {
     const { lat, lng, radius = 2 } = req.query;
     
@@ -191,7 +182,7 @@ app.get('/api/bins/nearby', (req, res) => {
     });
 });
 
-// UC17: Get all bin types
+
 app.get('/api/bins/types', (req, res) => {
     const query = 'SELECT * FROM Bin_Types ORDER BY type_name';
     
@@ -204,7 +195,7 @@ app.get('/api/bins/types', (req, res) => {
     });
 });
 
-// Update bin status using stored procedure
+
 app.put('/api/bins/:id/status', async (req, res) => {
     const binId = req.params.id;
     const { status } = req.body;
@@ -259,7 +250,7 @@ app.put('/api/bins/:id/status', async (req, res) => {
     }
 });
 
-// NEW: Find stations with multiple bin types (POST version)
+
 app.post('/api/stations/find', (req, res) => {
     const { latitude, longitude, binTypes, radius = 1.0 } = req.body;
     
@@ -310,7 +301,6 @@ app.post('/api/stations/find', (req, res) => {
     });
 });
 
-// Get all recycling stations
 app.get('/api/stations', (req, res) => {
     const query = `
         SELECT 
@@ -351,7 +341,6 @@ app.get('/api/stations', (req, res) => {
     });
 });
 
-// Get station by ID
 app.get('/api/stations/:id', (req, res) => {
     const { id } = req.params;
     
@@ -380,7 +369,7 @@ app.get('/api/stations/:id', (req, res) => {
     });
 });
 
-// Get bins at a specific station
+
 app.get('/api/stations/:id/bins', (req, res) => {
     const { id } = req.params;
     
@@ -409,7 +398,7 @@ app.get('/api/stations/:id/bins', (req, res) => {
     });
 });
 
-// Add new station
+
 app.post('/api/stations', async (req, res) => {
     const { station_name, latitude, longitude, description } = req.body;
     
@@ -452,7 +441,7 @@ app.post('/api/stations', async (req, res) => {
     }
 });
 
-// Add bin to station (KEEP ONLY ONE VERSION - async version)
+
 app.post('/api/stations/:id/bins', async (req, res) => {
     const stationId = req.params.id;
     const { bin_type_id, bin_name, status = 'Active' } = req.body;
@@ -496,7 +485,6 @@ app.post('/api/stations/:id/bins', async (req, res) => {
     }
 });
 
-// UC18: Report bin issue
 app.post('/api/issues/report', (req, res) => {
     const { bin_id, user_id, issue_type, description, photo_url } = req.body;
     
@@ -508,7 +496,6 @@ app.post('/api/issues/report', (req, res) => {
         photo_url,
     });
     
-    // Validation
     if (!user_id || !issue_type) {
         console.log('❌ Missing required fields');
         return res.status(400).json({ 
@@ -606,7 +593,6 @@ app.post('/api/issues/report', (req, res) => {
     }
 });
 
-// Get recent issues
 app.get('/api/issues/recent', (req, res) => {
     const query = `
         SELECT 
@@ -634,7 +620,7 @@ app.get('/api/issues/recent', (req, res) => {
     });
 });
 
-// Get bin statistics for dashboard
+
 app.get('/api/statistics', (req, res) => {
     const procedureQuery = 'CALL GetBinStatistics()';
     
@@ -655,7 +641,6 @@ app.get('/api/statistics', (req, res) => {
     });
 });
 
-// Test stored procedure (optional - for development)
 app.get('/api/test/procedure', (req, res) => {
     const testLat = 1.564145;
     const testLng = 103.638011;
@@ -695,7 +680,7 @@ app.get('/api/test/procedure', (req, res) => {
     });
 });
 
-// Error handling middleware
+
 app.use((err, req, res, next) => {
     console.error('Server Error:', err);
     res.status(500).json({ 
@@ -704,7 +689,7 @@ app.use((err, req, res, next) => {
     });
 });
 
-// 404 handler
+
 app.use('*', (req, res) => {
     res.status(404).json({ 
         error: 'Endpoint not found',
@@ -742,4 +727,5 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Issues: POST /api/issues/report, GET /api/issues/recent`);
     console.log(`✅ Statistics: GET /api/statistics`);
     console.log(`✅ Bin Management: PUT /api/bins/:id/status`);
+
 });
