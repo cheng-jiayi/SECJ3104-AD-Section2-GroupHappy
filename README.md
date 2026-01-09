@@ -78,19 +78,22 @@
     </td>
     <td>
       <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Cheng%20Jia%20Yi/src/screens/contributionTracking/MyEventsScreen.js">My Registered Events</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Cheng%20Jia%20Yi/src/screens/contributionTracking/AddContributionScreen.js">Add Contribution</a></li>
       </ul>
     </td>
     <td>
       <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Cheng%20Jia%20Yi/backend/server.js">Contribution Tracking Server</a></li>
       </ul>
     </td>
     <td>
       <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Cheng%20Jia%20Yi/backend/sprint3.sql">MySQL SQL Script</a></li>
       </ul>
     </td>
   </tr>
   <tr><td>4</td><td></td><td></td><td></td></tr>
-  <tr><td>5</td><td></td><td></td><td></td></tr>
 </table>
 
 
