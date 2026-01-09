@@ -37,9 +37,9 @@ INSERT INTO Event (
     'Recycling Workshop', 'Learn how to recycle effectively.', 'Workshop', '2025-12-15', '2025-12-15', 30, 3, 1
 );
 
--- Show all tables
+
 SHOW TABLES;
 
--- Check contents
+
 SELECT * FROM Administrator;
 SELECT * FROM Event;
