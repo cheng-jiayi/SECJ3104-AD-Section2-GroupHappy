@@ -179,7 +179,7 @@ const ReportScreen = ({ navigation, route }) => {
 
         const reportData = {
             bin_id: validBinId,
-            user_id: "1", // 必须是字符串
+            user_id: "1", 
             issue_type: selectedIssue,
             description: description.trim(),
             photo_url: photo ? photo.uri : null,
@@ -616,3 +616,4 @@ const styles = StyleSheet.create({
 
 
 export default ReportScreen;
+
