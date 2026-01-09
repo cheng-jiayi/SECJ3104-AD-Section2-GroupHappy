@@ -2,7 +2,6 @@
 -- UTM ReMerit - Complete Database Setup
 -- ============================================
 
--- First, disable safe updates for this session
 SET SQL_SAFE_UPDATES = 0;
 
 -- Create Database
