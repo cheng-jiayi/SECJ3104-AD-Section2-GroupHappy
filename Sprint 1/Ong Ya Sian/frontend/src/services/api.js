@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { getApiUrl } from './connectionTest';
 
-// Create axios instance with dynamic URL
 const createApi = () => {
   const API_URL = getApiUrl();
   console.log('🌐 Using API URL:', API_URL);
@@ -12,7 +11,6 @@ const createApi = () => {
   });
 };
 
-// GET all events
 export const getEvents = async () => {
   try {
     const api = createApi();
@@ -26,7 +24,6 @@ export const getEvents = async () => {
   }
 };
 
-// CREATE event
 export const createEvent = async (eventData) => {
   try {
     const api = createApi();
@@ -60,7 +57,6 @@ export const createEvent = async (eventData) => {
   }
 };
 
-// UPDATE event
 export const updateEvent = async (id, eventData) => {
   try {
     const api = createApi();
@@ -90,7 +86,6 @@ export const updateEvent = async (id, eventData) => {
   }
 };
 
-// DELETE event
 export const deleteEvent = async (id) => {
   try {
     const api = createApi();
@@ -107,4 +102,5 @@ export const deleteEvent = async (id) => {
       throw new Error('Network error. Please check server connection.');
     }
   }
+
 };
