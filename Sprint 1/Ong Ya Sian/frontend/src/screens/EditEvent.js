@@ -12,7 +12,7 @@ import {
   Image
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
-import { updateEvent } from '../../services/api';
+import { updateEvent } from '../services/api';
 
 export default function EditEvent({ route, navigation }) {
   const { event } = route.params;
@@ -407,4 +407,5 @@ const styles = StyleSheet.create({
   spacer: { 
     height: 10 
   }
+
 });
