@@ -15,7 +15,7 @@ export default function RegistrationScreen({ navigation }) {
     }
 
     try {
-      const res = await axios.post("http://10.217.99.173:3000/register", {
+      const res = await axios.post("http://10.0.2.2:3000/register", {
         name,
         username,
         password,
@@ -56,3 +56,4 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, marginBottom: 20, textAlign: 'center', color: '#000' },
   input: { borderWidth: 1, borderRadius: 6, padding: 12, marginBottom: 15, color: '#000' }
 });
+
