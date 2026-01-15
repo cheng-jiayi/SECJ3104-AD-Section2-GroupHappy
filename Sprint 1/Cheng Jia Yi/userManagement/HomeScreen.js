@@ -2,7 +2,16 @@ import React from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
 
 export default function HomeScreen({ route, navigation }) {
-    const { user } = route.params;
+    const user = route.params?.user;
+
+    if (!user) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.title}>No user data!</Text>
+                <Button title="Back to Start" onPress={() => navigation.navigate('Start')} />
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
@@ -12,14 +21,23 @@ export default function HomeScreen({ route, navigation }) {
             {user.role === 'admin' ? (
                 <Text style={styles.roleText}>You have admin access.</Text>
             ) : (
-                <Button
-                    title="View Events"
-                    onPress={() => navigation.navigate('Events', { user })}
-                    color="#4CAF50"
-                />
+                <>
+                    <Button
+                        title="View Events"
+                        onPress={() => navigation.navigate('Events', { user })}
+                        color="#4CAF50"
+                    />
+                    <View style={{ height: 10 }} />
+                    <Button
+                        title="My Registered Events"
+                        onPress={() => navigation.navigate('MyEvents', { user })}
+                        color="#4CAF50"
+                    />
+                </>
             )}
 
-            <Button title="Logout" onPress={() => navigation.navigate('Start')} color="#4CAF50" />
+            <View style={{ height: 20 }} />
+            <Button title="Logout" onPress={() => navigation.navigate('Start')} color="#f44336" />
         </View>
     );
 }
