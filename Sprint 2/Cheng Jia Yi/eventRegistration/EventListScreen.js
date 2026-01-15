@@ -16,7 +16,7 @@ import axios from 'axios';
 export default function EventListScreen({ route }) {
   const { user } = route.params;
   const [events, setEvents] = useState([]);
-  const [registrations, setRegistrations] = useState([]);
+  const [registrations, setRegistrations] = useState({}); // map of eventID -> status
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [categories, setCategories] = useState([]);
 
@@ -39,7 +39,14 @@ export default function EventListScreen({ route }) {
       const res = await axios.get(
         `http://10.0.2.2:3000/participation/student/${user.id}`
       );
-      setRegistrations(res.data.map(r => r.eventID));
+
+      // Create a map of eventID -> participationStatus
+      const regMap = {};
+      res.data.forEach(r => {
+        regMap[r.eventID] = r.participationStatus;
+      });
+
+      setRegistrations(regMap);
     } catch (err) {
       Alert.alert('Error', 'Failed to fetch your registrations');
     }
@@ -64,7 +71,7 @@ export default function EventListScreen({ route }) {
                 eventID
               });
               Alert.alert('Success', 'Registration Successful');
-              setRegistrations(prev => [...prev, eventID]);
+              setRegistrations(prev => ({ ...prev, [eventID]: 'Registered' }));
             } catch (err) {
               Alert.alert('Error', err.response?.data?.message || 'Registration failed');
             }
@@ -88,7 +95,7 @@ export default function EventListScreen({ route }) {
                 eventID
               });
               Alert.alert('Success', 'Registration Cancelled');
-              setRegistrations(prev => prev.filter(id => id !== eventID));
+              setRegistrations(prev => ({ ...prev, [eventID]: 'Cancelled' }));
             } catch (err) {
               Alert.alert('Error', err.response?.data?.message || 'Cancel failed');
             }
@@ -98,14 +105,14 @@ export default function EventListScreen({ route }) {
     );
   };
 
-  // Filter events by category
-  const filteredEvents =
-    selectedCategory === 'All'
-      ? events
-      : events.filter(e => e.eventCategory === selectedCategory);
+  // Filter events by category AND hide completed
+  const filteredEvents = events
+    .filter(e => registrations[e.eventID] !== 'Completed') // hide completed
+    .filter(e => selectedCategory === 'All' || e.eventCategory === selectedCategory);
 
   const renderItem = ({ item }) => {
-    const isRegistered = registrations.includes(item.eventID);
+    const status = registrations[item.eventID];
+    const isRegistered = status && status !== 'Cancelled';
     const start = new Date(item.eventStartDate);
     const end = new Date(item.eventEndDate);
     const today = new Date();
@@ -120,9 +127,9 @@ export default function EventListScreen({ route }) {
     const countdown =
       diffStart > 0
         ? `Starts in ${diffStart} day${diffStart > 1 ? 's' : ''}`
-        : diffEnd > 0
+        : diffEnd >= 0
         ? `Ends in ${diffEnd} day${diffEnd > 1 ? 's' : ''}`
-        : 'Event Completed';
+        : 'Event Completed'; // should not show due to filter
 
     const displayDate = `${formatDate(start)} - ${formatDate(end)}`;
 
