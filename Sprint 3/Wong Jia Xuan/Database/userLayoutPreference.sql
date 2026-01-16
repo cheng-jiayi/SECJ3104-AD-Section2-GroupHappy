@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS UserLayoutPreference (
+    preferenceID INT AUTO_INCREMENT PRIMARY KEY,
+    userID VARCHAR(36) NOT NULL UNIQUE, 
+    layoutConfig JSON NOT NULL, 
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_userID (userID) 
+);
+
+ALTER TABLE UserLayoutPreference 
+ADD UNIQUE INDEX idx_user_unique (userID);
