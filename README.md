@@ -236,8 +236,18 @@
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Wong%20Jia%20Xuan/smartscanner.js">SmartScanner</a></li>
       </ul>
     </td>
-    <td></td>
-    <td></td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Wong%20Jia%20Xuan/UTMReMerit_server/server.py">Flask Server (Python)</a>
+        </li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Wong%20Jia%20Xuan/Database/smartscanner.sql">smartscanner.sql</a>
+        </li>
+      </ul>
+    </td>
   </tr>
 
   <tr>
@@ -252,25 +262,63 @@
     </td>
     <td>
       <ul>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/campaignAnalytics.js">Campaign Analytics Dashboard</a></li>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/campaignComparison.js">Campaign Comparison</a></li>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/campaignDetail.js">Campaign Detail View</a></li>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/generateReport.js">Report Generation</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/campaignAnalytics.js">Campaign Analytics Dashboard</a>
+        </li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/campaignComparison.js">Campaign Comparison</a>
+        </li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/campaignDetail.js">Campaign Detail View</a>
+        </li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/generateReport.js">Report Generation</a>
+        </li>
       </ul>
     </td>
     <td>
       <ul>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/UTMReMerit_server/server.py">Flask Server (Python)</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/UTMReMerit_server/server.py">Flask Server (Python)</a>
+        </li>
       </ul>
     </td>
     <td>
       <ul>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/Database/campaignAnalytics.sql">Database Schema & Queries</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Wong%20Jia%20Xuan/Database/campaignAnalytics.sql">campaignAnalytics.sql</a>
+        </li>
       </ul>
     </td>
   </tr>
 
-  <tr><td>3</td><td></td><td></td><td></td><td></td></tr>
+  <tr>
+    <td>3</td>
+    <td>
+      HomePage and Navigation Bar Module
+      <ul>
+        <li>Display Daily Welcome and Prompt</li>
+        <li>Display Persistent Notification Center</li>
+        <li>Personalize Homepage Layout</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Wong%20Jia%20Xuan/adminHomeScreen.js">Admin Homepage</a>
+        </li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Wong%20Jia%20Xuan/studentHomeScreen.js">Student Homepage</a>
+        </li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Wong%20Jia%20Xuan/UTMReMerit_server/server.py">Flask Server (Python)</a>
+        </li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Wong%20Jia%20Xuan/Database/notification.sql">notification.sql</a>
+        </li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Wong%20Jia%20Xuan/Database/userLayoutPreference.sql">userLayoutPreference.sql</a>
+        </li>
+      </ul>
+    </td>
+  </tr>
   <tr><td>4</td><td></td><td></td><td></td><td></td></tr>
   <tr><td>5</td><td></td><td></td><td></td><td></td></tr>
 </table>
