@@ -3390,7 +3390,6 @@ def save_recycling_transaction():
                         else:
                             raise Exception(f"User {user_id} not found - cannot create student record")
                     
-                    # Now we have student['studentID']
                     student_id = student['studentID']
                     logger.info(f"✅ Found student: {student_id} for user: {user_id}")
                     
