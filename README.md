@@ -302,6 +302,8 @@
         </li>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Wong%20Jia%20Xuan/studentHomeScreen.js">Student Homepage</a>
         </li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%203/Wong%20Jia%20Xuan/LoginScreen.js">Updated Login Screen</a>
+        </li>
       </ul>
     </td>
     <td>
