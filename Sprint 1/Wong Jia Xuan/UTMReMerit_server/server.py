@@ -46,7 +46,7 @@ scheduler = None
 MYSQL_CONFIG = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'Hoo@790204',
+    'password': 'Foni21813',
     'database': 'utm_remerit',
     'port': 3306,
     'pool_name': 'utm_remerit_pool',
@@ -2667,14 +2667,14 @@ def get_server_info():
         'server': {
             'name': 'UTM ReMerit Server',
             'local_ip': local_ip,
-            'port': 5000,
+            'port': 3000,
             'os': platform.system(),
             'mode': 'real_model' if interpreter is not None else 'mock_detection'
         },
         'connection_methods': {
-            'usb_debugging': 'Use: http://localhost:5000',
-            'wifi_network': f'Use: http://{local_ip}:5000',
-            'android_emulator': 'Use: http://localhost:5000'
+            'usb_debugging': 'Use: http://localhost:3000',
+            'wifi_network': f'Use: http://{local_ip}:3000',
+            'android_emulator': 'Use: http://10.0.2.2:3000'
         },
         'database': {
             'connected': get_db_connection() is not None,
@@ -2784,8 +2784,8 @@ def health():
         'server_name': 'UTM ReMerit Server',
         'mode': 'real_model' if interpreter is not None else 'mock_detection',
         'connections': {
-            'local': 'http://localhost:5000',
-            'network': f'http://{local_ip}:5000',
+            'local': 'http://localhost:3000',
+            'network': f'http://{local_ip}:3000',
             'database': 'Connected' if get_db_connection() else 'Disconnected'
         }
     })
@@ -3336,39 +3336,116 @@ def save_recycling_transaction():
                 try:
                     logger.info("🎓 Updating student stats...")
                     
-                    # Get current student stats
+                    # FIRST: Get the student's studentID using userID
                     cursor.execute("""
-                        SELECT studentID, totalPoints, totalItemsRecycled, totalWeightRecycled
+                        SELECT studentID, totalPoints, totalItemsRecycled, totalWeightRecycled, totalMerits
                         FROM Student 
                         WHERE userID = %s
                     """, (user_id,))
                     
                     student = cursor.fetchone()
                     
-                    if student:
-                        update_student_query = """
-                            UPDATE Student 
-                            SET 
-                                totalPoints = totalPoints + %s,
-                                totalItemsRecycled = totalItemsRecycled + %s,
-                                totalWeightRecycled = totalWeightRecycled + %s,
-                                updatedAt = NOW()
+                    if not student:
+                        logger.error(f"❌ No student record found for userID: {user_id}")
+                        
+                        # Try to get user info to create student record if missing
+                        cursor.execute("""
+                            SELECT fullName, utmID, email 
+                            FROM User 
+                            WHERE userID = %s
+                        """, (user_id,))
+                        
+                        user_info = cursor.fetchone()
+                        
+                        if user_info:
+                            # Create student ID from UTM ID (or generate one)
+                            student_id = user_info['utmID']
+                            
+                            logger.info(f"🔄 Creating missing student record: {student_id}")
+                            
+                            # Insert new student record with default values
+                            insert_student_query = """
+                                INSERT INTO Student (
+                                    studentID, userID, totalPoints, totalMerits,
+                                    totalItemsRecycled, totalWeightRecycled, faculty, yearOfStudy
+                                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                            """
+                            
+                            cursor.execute(insert_student_query, (
+                                student_id,      # studentID
+                                user_id,         # userID
+                                0,               # totalPoints
+                                0,               # totalMerits
+                                0,               # totalItemsRecycled
+                                0.0,             # totalWeightRecycled
+                                'FSSH',          # faculty (default)
+                                1                # yearOfStudy (default)
+                            ))
+                            
+                            logger.info(f"✅ Created new student record with ID: {student_id}")
+                            
+                            # Re-fetch the newly created student
+                            cursor.execute("SELECT studentID FROM Student WHERE userID = %s", (user_id,))
+                            student = cursor.fetchone()
+                        else:
+                            raise Exception(f"User {user_id} not found - cannot create student record")
+                    
+                    # Now we have student['studentID']
+                    student_id = student['studentID']
+                    logger.info(f"✅ Found student: {student_id} for user: {user_id}")
+                    
+                    # Calculate merits (you can adjust this logic)
+                    # In your database, merits might be different from points
+                    merits_to_add = total_points  # Or use a different calculation if needed
+                    
+                    # Update Student table using studentID as primary key
+                    update_student_query = """
+                        UPDATE Student 
+                        SET 
+                            totalPoints = totalPoints + %s,
+                            totalItemsRecycled = totalItemsRecycled + %s,
+                            totalWeightRecycled = totalWeightRecycled + %s,
+                            totalMerits = totalMerits + %s
+                        WHERE studentID = %s
+                    """
+                    
+                    update_values = (
+                        total_points,           # Points to add
+                        round(total_quantity),  # Items to add (rounded to nearest integer)
+                        total_weight,           # Weight to add
+                        merits_to_add,          # Merits to add
+                        student_id              # WHERE clause uses studentID
+                    )
+                    
+                    cursor.execute(update_student_query, update_values)
+                    rows_affected = cursor.rowcount
+                    
+                    if rows_affected > 0:
+                        logger.info(f"✅ Student {student_id} updated: +{total_points} points, +{round(total_quantity)} items")
+                        
+                        # Get and log the updated totals
+                        cursor.execute("""
+                            SELECT totalPoints, totalItemsRecycled, totalWeightRecycled, totalMerits
+                            FROM Student 
                             WHERE studentID = %s
-                        """
+                        """, (student_id,))
                         
-                        cursor.execute(update_student_query, (
-                            total_points,
-                            round(total_quantity),
-                            total_weight,
-                            student['studentID']
-                        ))
-                        
-                        logger.info(f"✅ Student stats updated: +{total_points} points, +{round(total_quantity)} items, +{total_weight} kg")
+                        updated_student = cursor.fetchone()
+                        if updated_student:
+                            logger.info(f"📈 New totals - Points: {updated_student['totalPoints']}, "
+                                    f"Items: {updated_student['totalItemsRecycled']}, "
+                                    f"Weight: {updated_student['totalWeightRecycled']}, "
+                                    f"Merits: {updated_student['totalMerits']}")
+                    else:
+                        logger.error(f"❌ Student update failed for studentID: {student_id}")
+                        raise Exception(f"Failed to update student {student_id}")
                     
                 except Exception as student_error:
-                    logger.warning(f"⚠️ Error updating student stats: {student_error}")
-                    # Don't fail the transaction if student update fails
-            
+                    logger.error(f"❌ Error updating student stats: {student_error}")
+                    logger.error(f"Error traceback: {traceback.format_exc()}")
+                    # Re-raise to rollback the transaction
+                    raise
+
             # 4. Create a simple scan record (optional)
             try:
                 scan_query = """
@@ -4739,8 +4816,8 @@ def test_connection():
         'message': 'Server is running!',
         'timestamp': datetime.now().isoformat(),
         'server_info': {
-            'local_url': 'http://localhost:5000',
-            'network_url': f'http://{local_ip}:5000',
+            'local_url': 'http://localhost:3000',
+            'network_url': f'http://{local_ip}:3000',
             'ai_model_loaded': interpreter is not None
         }
     })
@@ -5819,9 +5896,9 @@ if __name__ == '__main__':
     
     print(f"\n🌐 Computer IP Address: {local_ip}")
     print("\n🔗 CONNECTION METHODS:")
-    print("   For USB Debugging: http://localhost:5000")
-    print("   For WiFi Network:  http://" + local_ip + ":5000")
-    print("   For Android Emulator: http://localhost:5000")
+    print("   For USB Debugging: http://localhost:3000")
+    print("   For WiFi Network:  http://" + local_ip + ":3000")
+    print("   For Android Emulator: http://10.0.2.2:3000")
     
     print("\n📊 DATABASE STATUS:")
     if get_db_connection():
@@ -5833,8 +5910,8 @@ if __name__ == '__main__':
     print("\n📱 REACT NATIVE SETUP:")
     print("   1. Connect phone via USB")
     print("   2. Enable USB Debugging on phone")
-    print("   3. Run: adb reverse tcp:5000 tcp:5000")
-    print("   4. In React Native app, use: http://localhost:5000")
+    print("   3. Run: adb reverse tcp:3000 tcp:3000")
+    print("   4. In React Native app, use: http://localhost:3000")
     
     print("\n🔧 API ENDPOINTS:")
     print("   GET  /api/server-info  - Server information")
@@ -5849,8 +5926,8 @@ if __name__ == '__main__':
     print("   DELETE /api/reports/<id> - Delete a report")
     
     print("\n" + "=" * 60)
-    print("💡 TIP: Test server with: curl http://localhost:5000/api/test")
+    print("💡 TIP: Test server with: curl http://localhost:3000/api/test")
     print("=" * 60 + "\n")
     
     # Start server with all interfaces
-    app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)
+    app.run(host='0.0.0.0', port=3000, debug=True, threaded=True)
