@@ -2,46 +2,135 @@ import React, { useState, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, Button, ScrollView, Alert, ActivityIndicator,
   Image, TextInput, TouchableOpacity, Modal, FlatList, PermissionsAndroid,
-  Platform
+  Platform, KeyboardAvoidingView
 } from 'react-native';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function SmartScannerScreen({ navigation }) {
+export default function SmartScannerScreen({ navigation, route }) {
   const [detectedItems, setDetectedItems] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [showManualModal, setShowManualModal] = useState(false);
   const [manualQuantity, setManualQuantity] = useState('1');
+  const [manualUnit, setManualUnit] = useState('units');
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [cameraPermission, setCameraPermission] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
 
-  // Simplified waste categories
-  const WASTE_CATEGORIES = [
-    { id: 1, label: 'Glass', class: 'Glass', recyclable: true },
-    { id: 2, label: 'Metal', class: 'Metal', recyclable: true },
-    { id: 3, label: 'Paper', class: 'Paper', recyclable: true },
-    { id: 4, label: 'Plastic', class: 'Plastic', recyclable: true },
-    { id: 5, label: 'Non-Recyclable', class: 'Non-Recyclable', recyclable: false },
-    { id: 6, label: 'Tyre', class: 'Tyre', recyclable: false },
-  ];
+  // Load current user from navigation params or AsyncStorage
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        console.log('🔄 Loading user data...');
+        
+        // Try to get user from navigation params first (passed from StudentHomeScreen)
+        const userFromParams = route.params?.user;
+        
+        if (userFromParams) {
+          console.log('✅ User from navigation params:', userFromParams.username);
+          setCurrentUser(userFromParams);
+          
+          // Store in AsyncStorage for future use
+          await AsyncStorage.setItem('currentUser', JSON.stringify(userFromParams));
+          return;
+        }
+        
+        // If no params, try AsyncStorage
+        const storedUser = await AsyncStorage.getItem('currentUser');
+        if (storedUser) {
+          const userData = JSON.parse(storedUser);
+          console.log('✅ User from AsyncStorage:', userData.username);
+          setCurrentUser(userData);
+        } else {
+          console.warn('⚠️ No user data found');
+        }
+        
+      } catch (error) {
+        console.error('❌ Error loading user:', error);
+      }
+    };
+    
+    loadUserData();
+    console.log('✅ Smart Scanner Ready - Flask AI Server Connected');
+  }, [route.params?.user]);
 
-  const MERIT_POINTS = {
-    'Glass': 5, 'Metal': 8, 'Paper': 3, 'Plastic': 4, 'Non-Recyclable': 0, 'Tyre': 10,
+  // Helper function to reload user data
+  const reloadUserData = async () => {
+    try {
+      const storedUser = await AsyncStorage.getItem('currentUser');
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        setCurrentUser(user);
+        console.log('✅ User reloaded:', user.username);
+        Alert.alert('Success', 'User data reloaded successfully!');
+        return user;
+      } else {
+        Alert.alert('No User Found', 'Please login first.');
+        navigation.navigate('Login');
+      }
+    } catch (error) {
+      console.error('Error reloading user:', error);
+    }
+    return null;
   };
 
-  // Class mapping for Flask server responses
+  // Waste categories matching your database MaterialType table (ONLY 4 CATEGORIES)
+  const WASTE_CATEGORIES = [
+    { 
+      id: 1, 
+      label: 'Paper', 
+      class: 'Paper', 
+      recyclable: true, 
+      unit: 'kg',
+      hasWeight: true,
+      measurementUnit: 'kg',
+      pointsPerUnit: null,
+      pointsPerKg: 10
+    },
+    { 
+      id: 2, 
+      label: 'Plastic', 
+      class: 'Plastic', 
+      recyclable: true, 
+      unit: 'units',
+      hasWeight: false,
+      measurementUnit: 'units',
+      pointsPerUnit: 4,
+      pointsPerKg: null
+    },
+    { 
+      id: 3, 
+      label: 'Glass', 
+      class: 'Glass', 
+      recyclable: true, 
+      unit: 'units',
+      hasWeight: false,
+      measurementUnit: 'units',
+      pointsPerUnit: 5,  
+      pointsPerKg: null
+    },
+    { 
+      id: 4, 
+      label: 'Metal', 
+      class: 'Metal', 
+      recyclable: true, 
+      unit: 'units',
+      hasWeight: false,
+      measurementUnit: 'units',
+      pointsPerUnit: 8,  
+      pointsPerKg: null
+    }
+  ];
+
+  // Class mapping for Flask server responses (ONLY 4 CATEGORIES)
   const CLASS_MAPPING = {
     '0': 'Plastic',
     '1': 'Glass',
     '2': 'Metal', 
-    '3': 'Paper',
-    '4': 'Non-Recyclable',
-    '5': 'Tyre',
+    '3': 'Paper'
   };
-
-  useEffect(() => {
-    console.log('✅ Smart Scanner Ready - Flask AI Server Connected');
-  }, []);
 
   // Helper function to find existing item by class
   const findExistingItem = (className) => {
@@ -54,23 +143,43 @@ export default function SmartScannerScreen({ navigation }) {
       const existingItem = findExistingItem(newItem.class);
       
       if (existingItem) {
-        // If item exists, increase quantity
+        // If item exists, increase quantity/weight
         return prevItems.map(item =>
           item.class === newItem.class 
-            ? { ...item, quantity: item.quantity + newItem.quantity }
+            ? { 
+                ...item, 
+                quantity: parseFloat((item.quantity + newItem.quantity).toFixed(2)),
+                weight: item.class === 'Paper' ? parseFloat((item.weight + newItem.weight).toFixed(2)) : item.weight
+              }
             : item
         );
       } else {
         // If item doesn't exist, add new item
-        return [...prevItems, newItem];
+        return [...prevItems, { 
+          ...newItem,
+          weight: newItem.class === 'Paper' ? newItem.quantity : 0
+        }];
       }
     });
+  };
+
+  // Calculate points for an item based on database logic
+  const calculateItemPoints = (item) => {
+    const category = WASTE_CATEGORIES.find(cat => cat.class === item.class);
+    if (!category) return 0;
+    
+    if (category.measurementUnit === 'kg' && category.pointsPerKg) {
+      return item.weight * category.pointsPerKg;
+    } else if (category.pointsPerUnit) {
+      return item.quantity * category.pointsPerUnit;
+    }
+    return 0;
   };
 
   // Web API inference - Connect to your Flask server
   const runWebAPIInference = async (imageUri) => {
     try {
-      console.log('Sending image to AI server...');
+      console.log('📤 Sending image to AI server...');
       
       const formData = new FormData();
       formData.append('image', {
@@ -79,14 +188,11 @@ export default function SmartScannerScreen({ navigation }) {
         name: 'recyclable_item.jpg',
       });
 
-      const API_URL = 'http://localhost:5000/predict';
+      const API_URL = 'http://localhost:3000/predict';
 
       const response = await fetch(API_URL, {
         method: 'POST',
         body: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
       });
 
       if (!response.ok) {
@@ -108,7 +214,7 @@ export default function SmartScannerScreen({ navigation }) {
     }
   };
 
-  // Save image to laptop for AI improvement (manual confirmation)
+  // Save image for AI training
   const uploadImageForAIImprovement = async () => {
     if (!selectedImage) {
       Alert.alert('No Image', 'Please scan an image first before uploading for AI improvement.');
@@ -134,19 +240,15 @@ export default function SmartScannerScreen({ navigation }) {
                 name: `ai_training_${Date.now()}.jpg`,
               });
               
-              // Add detected classes as metadata
               const detectedClasses = detectedItems.map(d => d.class);
               formData.append('detected_classes', JSON.stringify(detectedClasses));
               formData.append('timestamp', new Date().toISOString());
 
-              const API_URL = 'http://localhost:5000/save_training_image';
+              const API_URL = 'http://localhost:3000/save_training_image';
 
               const response = await fetch(API_URL, {
                 method: 'POST',
                 body: formData,
-                headers: {
-                  'Content-Type': 'multipart/form-data',
-                },
               });
 
               if (response.ok) {
@@ -169,59 +271,170 @@ export default function SmartScannerScreen({ navigation }) {
     );
   };
 
-  // Save data to laptop
-  const saveDataToLaptop = async () => {
+  // Save data to database 
+  const saveDataToDatabase = async () => {
+    console.log('🔍 Debug: Checking user before save:', {
+      currentUser,
+      hasUserID: currentUser?.userID,
+      username: currentUser?.username
+    });
+
     if (detectedItems.length === 0) {
-      Alert.alert('Error', 'No items to save');
+      Alert.alert('Empty List', 'Please scan or add items first');
+      return;
+    }
+
+    // Check for valid user with userID
+    if (!currentUser?.userID) {
+      console.error('❌ No valid user found:', currentUser);
+      
+      Alert.alert(
+        'Login Required',
+        'Please login to save your recycling data.\n\nWould you like to:',
+        [
+          { 
+            text: 'Go to Login', 
+            onPress: () => navigation.navigate('Login')
+          },
+          { 
+            text: 'Try Reloading User', 
+            onPress: async () => {
+              try {
+                const storedUser = await AsyncStorage.getItem('currentUser');
+                if (storedUser) {
+                  const user = JSON.parse(storedUser);
+                  setCurrentUser(user);
+                  console.log('✅ User reloaded from storage:', user.username);
+                  Alert.alert('Success', 'User reloaded! Try saving again.');
+                } else {
+                  Alert.alert('Not Logged In', 'Please login first');
+                  navigation.navigate('Login');
+                }
+              } catch (error) {
+                console.error('Error reloading user:', error);
+              }
+            }
+          },
+          { 
+            text: 'Cancel', 
+            style: 'cancel' 
+          }
+        ]
+      );
       return;
     }
 
     try {
-      const timestamp = new Date().toLocaleString();
-      const totalItems = getTotalItems();
-      const totalPoints = getTotalMeritPoints();
+      setIsProcessing(true);
       
-      const submissionData = {
-        id: Date.now(),
-        timestamp: timestamp,
-        total_items: totalItems,
-        total_points: totalPoints,
-        items: detectedItems
-      };
-
-      const API_URL = 'http://localhost:5000/save_recycling_data';
-
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify(submissionData),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      // Prepare data for each item
+      const scannedItems = detectedItems.map(item => {
+        // Convert class to lowercase to match database ENUM
+        const materialType = item.class.toLowerCase();
+        
+        // Calculate points based on category
+        const category = WASTE_CATEGORIES.find(cat => cat.class === item.class);
+        let pointsEarned = 0;
+        
+        if (category) {
+          if (item.class === 'Paper') {
+            pointsEarned = item.weight * category.pointsPerKg;
+          } else {
+            pointsEarned = item.quantity * category.pointsPerUnit;
+          }
+        }
+        
+        return {
+          userID: currentUser.userID,
+          material_type: materialType,  // Lowercase to match database
+          quantity: parseFloat(item.quantity.toFixed(2)),
+          points_earned: Math.round(pointsEarned),  // Renamed to match database
+          weight: item.class === 'Paper' ? parseFloat(item.quantity.toFixed(2)) : 0,
+          weight_unit: item.class === 'Paper' ? 'kg' : 'units',
+          recyclable: true,  // All are recyclable in our 4 categories
+          confidence: item.confidence || 1.0,
+          manual_entry: item.manual || false,  // Renamed to match database
+          ai_detected: !item.manual,
+          transaction_date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+          scan_method: selectedImage ? 'ai' : 'manual',
+          status: 'finalized',
+          corrected: false
+        };
       });
 
-      if (response.ok) {
+      // Calculate totals
+      const totalItems = detectedItems.reduce((sum, item) => sum + item.quantity, 0);
+      const totalWeight = detectedItems.reduce((sum, item) => sum + (item.weight || 0), 0);
+      const totalPoints = scannedItems.reduce((sum, item) => sum + item.points_earned, 0);
+
+      console.log('📊 Preparing to save:', {
+        userID: currentUser.userID,
+        username: currentUser.username,
+        totalItems,
+        totalWeight,
+        totalPoints,
+        itemsCount: detectedItems.length
+      });
+
+      // Prepare submission data
+      const submissionData = {
+        userID: currentUser.userID,
+        items: scannedItems,
+        scanData: {
+          totalItems: Math.round(totalItems),
+          totalWeight: parseFloat(totalWeight.toFixed(2)),
+          totalPoints: totalPoints,
+          scanMethod: selectedImage ? 'ai' : 'manual',
+          notes: `Recyclable items scan - ${detectedItems.map(item => item.label).join(', ')}`
+        },
+        imageData: selectedImage ? {
+          imagePath: selectedImage.uri,
+          imageType: 'scan'
+        } : null
+      };
+
+      // Save to database - UPDATED ENDPOINT
+      const API_URL = 'http://localhost:3000/api/save-recycling-transaction';
+      console.log('📤 Sending to:', API_URL);
+      
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submissionData),
+      });
+
+      const result = await response.json();
+      console.log('✅ Server response:', result);
+
+      if (result.success) {
         Alert.alert(
-          'Success!', 
-          `Data saved! 📁\n\nTotal Items: ${totalItems}\nTotal Points: ${totalPoints}`,
+          'Success! 🎉', 
+          `Your recycling data has been saved!\n\n• Items: ${result.totalItems || Math.round(totalItems)}\n• Points: ${result.totalPoints || totalPoints}`,
           [
             {
               text: 'OK',
               onPress: () => {
+                // Reset only on success
                 setDetectedItems([]);
                 setSelectedImage(null);
+                setIsProcessing(false);
               }
             }
           ]
         );
       } else {
-        Alert.alert('Info', 'Data saving requires server setup.');
+        Alert.alert('Save Failed', result.error || 'Could not save to database');
+        setIsProcessing(false);
       }
       
     } catch (error) {
-      Alert.alert('Info', 'Laptop saving requires server setup.');
+      console.error('❌ Save error:', error);
+      Alert.alert('Network Error', 'Could not connect to server. Check your connection.');
+      setIsProcessing(false);
     }
   };
 
+  // Parse API results from Flask server
   const parseAPIResults = (detections) => {
     if (!detections || detections.length === 0) {
       Alert.alert('No Detection', 'No recyclable items detected. Try a clearer image or use manual input.');
@@ -232,7 +445,11 @@ export default function SmartScannerScreen({ navigation }) {
     const seenClasses = new Set();
 
     detections.forEach((detection, index) => {
-      const className = detection.class || CLASS_MAPPING[detection.class_id?.toString()] || 'Non-Recyclable';
+      const className = detection.class || CLASS_MAPPING[detection.class_id?.toString()];
+      
+      // Only process if className exists in CLASS_MAPPING (one of our 4 categories)
+      if (!className) return;
+      
       const confidence = detection.confidence || detection.score || 0.5;
       
       if (confidence > 0.3 && !seenClasses.has(className)) {
@@ -240,16 +457,29 @@ export default function SmartScannerScreen({ navigation }) {
         
         const wasteCategory = WASTE_CATEGORIES.find(cat => 
           cat.class.toLowerCase() === className.toLowerCase()
-        ) || WASTE_CATEGORIES.find(cat => cat.class === 'Non-Recyclable');
+        );
 
+        // Skip if category not found
+        if (!wasteCategory) return;
+        
+        const unit = wasteCategory.unit;
+        const quantity = className === 'Paper' ? 0.5 : 1;
+        const weight = className === 'Paper' ? 0.5 : 0;
+        
         uniqueDetections.push({
           id: Date.now() + index,
-          label: wasteCategory?.label || className,
+          label: wasteCategory.label,
           confidence: confidence,
-          recyclable: wasteCategory?.recyclable || false,
-          class: wasteCategory?.class || className,
-          quantity: 1,
-          meritPoints: MERIT_POINTS[className] || 0,
+          recyclable: wasteCategory.recyclable,
+          class: wasteCategory.class,
+          quantity: quantity,
+          weight: weight,
+          unit: unit,
+          meritPoints: calculateItemPoints({
+            class: className,
+            quantity: quantity,
+            weight: weight
+          }),
           manual: false
         });
       }
@@ -260,6 +490,12 @@ export default function SmartScannerScreen({ navigation }) {
     }
 
     return uniqueDetections;
+  };
+
+  // Get unit for item type
+  const getUnitForItem = (className) => {
+    const category = WASTE_CATEGORIES.find(cat => cat.class === className);
+    return category ? category.unit : 'units';
   };
 
   // Camera permission
@@ -320,12 +556,10 @@ export default function SmartScannerScreen({ navigation }) {
         try {
           const detections = await runWebAPIInference(response.assets[0].uri);
           if (detections.length > 0) {
-            // Use addOrUpdateItem instead of directly setting state
             detections.forEach(detection => {
               addOrUpdateItem(detection);
             });
             
-            // Show appropriate message
             const newItems = detections.filter(detection => !findExistingItem(detection.class));
             const updatedItems = detections.filter(detection => findExistingItem(detection.class));
             
@@ -367,12 +601,10 @@ export default function SmartScannerScreen({ navigation }) {
           try {
             const detections = await runWebAPIInference(response.assets[0].uri);
             if (detections.length > 0) {
-              // Use addOrUpdateItem instead of directly setting state
               detections.forEach(detection => {
                 addOrUpdateItem(detection);
               });
               
-              // Show appropriate message
               const newItems = detections.filter(detection => !findExistingItem(detection.class));
               const updatedItems = detections.filter(detection => findExistingItem(detection.class));
               
@@ -398,57 +630,130 @@ export default function SmartScannerScreen({ navigation }) {
   };
 
   // Manual input functions
-  const addManualItem = (category) => {
-    const quantity = parseInt(manualQuantity) || 1;
+  const selectCategoryForManual = (category) => {
+    setSelectedCategory(category);
+    setManualUnit(category.unit);
+    if (category.class === 'Paper') {
+      setManualQuantity('0.5'); // Default 0.5 kg for paper
+    } else {
+      setManualQuantity('1'); // Default 1 unit for others
+    }
+  };
+
+  const addManualItem = () => {
+    if (!selectedCategory) {
+      Alert.alert('No Category', 'Please select a waste category first');
+      return;
+    }
+
+    const quantity = parseFloat(manualQuantity) || (selectedCategory.class === 'Paper' ? 0.5 : 1);
+    const weight = selectedCategory.class === 'Paper' ? quantity : 0;
     
     const newItem = {
       id: Date.now(),
-      label: category.label,
+      label: selectedCategory.label,
       confidence: 1.0,
-      recyclable: category.recyclable,
-      class: category.class,
+      recyclable: selectedCategory.recyclable,
+      class: selectedCategory.class,
       quantity: quantity,
-      meritPoints: MERIT_POINTS[category.class],
+      weight: weight,
+      unit: selectedCategory.unit,
+      meritPoints: calculateItemPoints({
+        class: selectedCategory.class,
+        quantity: quantity,
+        weight: weight
+      }),
       manual: true
     };
 
     // Use addOrUpdateItem to prevent duplicates
     addOrUpdateItem(newItem);
+    
+    const existingItem = findExistingItem(selectedCategory.class);
+    if (existingItem && existingItem.quantity > quantity) {
+      Alert.alert('Updated', `${selectedCategory.label} ${selectedCategory.unit === 'kg' ? 'weight' : 'quantity'} increased to ${existingItem.quantity.toFixed(2)} ${selectedCategory.unit}!`);
+    } else {
+      Alert.alert('Added', `${selectedCategory.label} added to list!`);
+    }
+    
+    // Reset modal
+    setSelectedCategory(null);
     setShowManualModal(false);
     setManualQuantity('1');
-    
-    const existingItem = findExistingItem(category.class);
-    if (existingItem && existingItem.quantity > quantity) {
-      Alert.alert('Updated', `${category.label} quantity increased to ${existingItem.quantity}!`);
-    } else {
-      Alert.alert('Added', `${category.label} added to list!`);
-    }
+    setManualUnit('units');
   };
 
   const increaseQuantity = (id) => {
     setDetectedItems(prevItems =>
-      prevItems.map(item =>
-        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
-      )
+      prevItems.map(item => {
+        if (item.id === id) {
+          const increment = item.class === 'Paper' ? 0.1 : 1;
+          const newQuantity = parseFloat((item.quantity + increment).toFixed(2));
+          const newWeight = item.class === 'Paper' ? newQuantity : item.weight;
+          return { 
+            ...item, 
+            quantity: newQuantity,
+            weight: newWeight,
+            meritPoints: calculateItemPoints({
+              class: item.class,
+              quantity: newQuantity,
+              weight: newWeight
+            })
+          };
+        }
+        return item;
+      })
     );
   };
 
   const decreaseQuantity = (id) => {
     setDetectedItems(prevItems =>
-      prevItems.map(item =>
-        item.id === id && item.quantity > 1 
-          ? { ...item, quantity: item.quantity - 1 } 
-          : item
-      )
+      prevItems.map(item => {
+        if (item.id === id) {
+          const decrement = item.class === 'Paper' ? 0.1 : 1;
+          const newQuantity = Math.max(
+            item.class === 'Paper' ? 0.1 : 1, 
+            parseFloat((item.quantity - decrement).toFixed(2))
+          );
+          const newWeight = item.class === 'Paper' ? newQuantity : item.weight;
+          return { 
+            ...item, 
+            quantity: newQuantity,
+            weight: newWeight,
+            meritPoints: calculateItemPoints({
+              class: item.class,
+              quantity: newQuantity,
+              weight: newWeight
+            })
+          };
+        }
+        return item;
+      })
     );
   };
 
   const updateQuantity = (id, newQuantity) => {
-    const quantity = parseInt(newQuantity) || 1;
+    const quantity = parseFloat(newQuantity) || (detectedItems.find(item => item.id === id)?.class === 'Paper' ? 0.5 : 1);
+    const minQuantity = detectedItems.find(item => item.id === id)?.class === 'Paper' ? 0.1 : 1;
+    const finalQuantity = Math.max(minQuantity, parseFloat(quantity.toFixed(2)));
+    
     setDetectedItems(prevItems =>
-      prevItems.map(item =>
-        item.id === id ? { ...item, quantity: Math.max(1, quantity) } : item
-      )
+      prevItems.map(item => {
+        if (item.id === id) {
+          const newWeight = item.class === 'Paper' ? finalQuantity : item.weight;
+          return { 
+            ...item, 
+            quantity: finalQuantity,
+            weight: newWeight,
+            meritPoints: calculateItemPoints({
+              class: item.class,
+              quantity: finalQuantity,
+              weight: newWeight
+            })
+          };
+        }
+        return item;
+      })
     );
   };
 
@@ -457,17 +762,33 @@ export default function SmartScannerScreen({ navigation }) {
   };
 
   const getTotalItems = () => {
-    return detectedItems.reduce((total, item) => total + item.quantity, 0);
+    return detectedItems.reduce((total, item) => {
+      return total + 1; // Count each item as 1 regardless of quantity/weight
+    }, 0);
+  };
+
+  const getTotalWeight = () => {
+    return detectedItems.reduce((total, item) => {
+      return total + (item.weight || 0);
+    }, 0).toFixed(2);
   };
 
   const getTotalMeritPoints = () => {
     return detectedItems.reduce((total, item) => 
-      total + (item.meritPoints * item.quantity), 0
-    );
+      total + (item.meritPoints || 0), 0
+    ).toFixed(2);
   };
 
   const getMeritPointsForItem = (item) => {
-    return item.meritPoints * item.quantity;
+    return (item.meritPoints || 0).toFixed(2);
+  };
+
+  const getDisplayQuantity = (item) => {
+    if (item.class === 'Paper') {
+      return `${item.quantity.toFixed(2)} kg`;
+    } else {
+      return `${item.quantity} ${item.unit}`;
+    }
   };
 
   const submitList = () => {
@@ -476,12 +797,20 @@ export default function SmartScannerScreen({ navigation }) {
       return;
     }
 
+    if (!currentUser) {
+      Alert.alert('Login Required', 'Please login first to save data');
+      return;
+    }
+
+    const totalWeight = getTotalWeight();
+    const weightDisplay = totalWeight > 0 ? `\nTotal Paper Weight: ${totalWeight} kg` : '';
+    
     Alert.alert(
       'Save Data',
-      `Save this recycling data?\n\nTotal Items: ${getTotalItems()}\nTotal Points: ${getTotalMeritPoints()}`,
+      `Save this recycling data to database?${weightDisplay}\n\nTotal Items: ${getTotalItems()}\nTotal Points: ${getTotalMeritPoints()}`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Save', onPress: saveDataToLaptop }
+        { text: 'Save', onPress: saveDataToDatabase }
       ]
     );
   };
@@ -490,37 +819,49 @@ export default function SmartScannerScreen({ navigation }) {
     <TouchableOpacity 
       style={[
         styles.categoryItem,
-        item.recyclable ? styles.recyclableCategory : styles.nonRecyclableCategory
+        styles.recyclableCategory,
+        selectedCategory?.id === item.id && styles.selectedCategory
       ]}
-      onPress={() => addManualItem(item)}
+      onPress={() => selectCategoryForManual(item)}
     >
       <View style={styles.categoryContent}>
-        <Text style={styles.categoryLabel}>{item.label}</Text>
+        <View style={styles.categoryHeader}>
+          <Text style={styles.categoryLabel}>{item.label}</Text>
+          <Text style={styles.categoryUnit}>({item.unit})</Text>
+        </View>
         <Text style={styles.categoryPoints}>
-          {MERIT_POINTS[item.class]} points {item.recyclable ? '♻️' : '🚫'}
+          {item.class === 'Paper' 
+            ? `${item.pointsPerKg} points/kg ♻️` 
+            : `${item.pointsPerUnit} points/unit ♻️`
+          }
         </Text>
         {findExistingItem(item.class) && (
           <Text style={styles.existingItemText}>
-            Already in list: {findExistingItem(item.class).quantity}
+            Already in list: {findExistingItem(item.class).quantity.toFixed(2)} {item.unit}
           </Text>
+        )}
+        {selectedCategory?.id === item.id && (
+          <Text style={styles.selectedIndicator}>✓ Selected</Text>
         )}
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <View style={styles.container}>
-
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Let’s Scan with AI</Text>
-        <Text style={styles.subtitle}>
-          {modelLoaded ? 'AI Model Ready 🟢' : 'Loading AI Model... 🟡'}
-        </Text>
-        <Text style={styles.instruction}>
-          Take photo → AI detection → Save data
-        </Text>
-      </View>
+        <View style={styles.header}>
+          <Text style={styles.title}>Let's Scan with AI</Text>
+          <Text style={styles.subtitle}>
+            {modelLoaded ? 'AI Model Ready 🟢' : 'Loading AI Model... 🟡'}
+          </Text>
+          <Text style={styles.instruction}>
+            Paper measured in kg, others in units (Plastic, Glass, Metal)
+          </Text>
+        </View>
         
         <View style={styles.imageContainer}>
           {selectedImage ? (
@@ -558,7 +899,7 @@ export default function SmartScannerScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Manual Input Button - Moved to top right of results section */}
+        {/* Manual Input Button */}
         {detectedItems.length > 0 && (
           <View style={styles.manualInputHeader}>
             <Text style={styles.resultsTitle}>📋 Detected Items</Text>
@@ -580,6 +921,11 @@ export default function SmartScannerScreen({ navigation }) {
               <Text style={styles.stat}>Types: {detectedItems.length}</Text>
               <Text style={[styles.stat, styles.meritHighlight]}>Points: {getTotalMeritPoints()}</Text>
             </View>
+            {parseFloat(getTotalWeight()) > 0 && (
+              <View style={styles.weightContainer}>
+                <Text style={styles.weightText}>📦 Total Paper Weight: {getTotalWeight()} kg</Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -592,16 +938,18 @@ export default function SmartScannerScreen({ navigation }) {
           {detectedItems.length > 0 && (
             <View style={styles.itemsContainer}>
               {detectedItems.map((item) => (
-                <View key={item.id} style={[
-                  styles.itemCard,
-                  item.recyclable ? styles.recyclableCard : styles.nonRecyclableCard
-                ]}>
+                <View key={item.id} style={[styles.itemCard, styles.recyclableCard]}>
                   <View style={styles.itemHeader}>
                     <View style={styles.itemInfo}>
                       <Text style={styles.itemName}>{item.label}</Text>
-                      <Text style={styles.itemClass}>
-                        {item.class} {item.manual && '(Manual)'}
-                      </Text>
+                      <View style={styles.itemClassRow}>
+                        <Text style={styles.itemClass}>
+                          {item.class} {item.manual && '(Manual)'}
+                        </Text>
+                        <Text style={styles.itemUnit}>
+                          ({getUnitForItem(item.class)})
+                        </Text>
+                      </View>
                     </View>
                     <TouchableOpacity style={styles.deleteButton} onPress={() => removeItem(item.id)}>
                       <Text style={styles.deleteButtonText}>✕</Text>
@@ -613,25 +961,23 @@ export default function SmartScannerScreen({ navigation }) {
                       <Text style={styles.itemConfidence}>AI Confidence: {(item.confidence * 100).toFixed(0)}%</Text>
                     )}
                     
-                    <Text style={[
-                      styles.recyclableText,
-                      item.recyclable ? styles.recyclable : styles.nonRecyclable
-                    ]}>
-                      {item.recyclable ? '♻️ Recyclable' : '🚫 Non-Recyclable'}
+                    <Text style={[styles.recyclableText, styles.recyclable]}>
+                      ♻️ Recyclable
                     </Text>
 
                     <View style={styles.meritContainer}>
                       <Text style={styles.meritLabel}>Rewards Points:</Text>
                       <Text style={styles.meritValue}>
-                        {item.meritPoints} pts × {item.quantity} = 
-                        <Text style={styles.totalMerit}> {getMeritPointsForItem(item)} pts</Text>
+                        {getMeritPointsForItem(item)} pts
                       </Text>
                     </View>
                   </View>
 
-                  {/* Quantity Controls */}
+                  {/* Quantity/Weight Controls */}
                   <View style={styles.quantityContainer}>
-                    <Text style={styles.quantityLabel}>Quantity:</Text>
+                    <Text style={styles.quantityLabel}>
+                      {item.class === 'Paper' ? 'Weight (kg):' : 'Quantity:'}
+                    </Text>
                     <View style={styles.quantityControls}>
                       <TouchableOpacity style={styles.quantityButton} onPress={() => decreaseQuantity(item.id)}>
                         <Text style={styles.quantityButtonText}>-</Text>
@@ -641,14 +987,15 @@ export default function SmartScannerScreen({ navigation }) {
                         style={styles.quantityInput}
                         value={item.quantity.toString()}
                         onChangeText={(text) => updateQuantity(item.id, text)}
-                        keyboardType="numeric"
-                        maxLength={2}
+                        keyboardType="decimal-pad"
+                        maxLength={item.class === 'Paper' ? 6 : 3}
                       />
                       
                       <TouchableOpacity style={styles.quantityButton} onPress={() => increaseQuantity(item.id)}>
                         <Text style={styles.quantityButtonText}>+</Text>
                       </TouchableOpacity>
                     </View>
+                    <Text style={styles.unitDisplay}>{getDisplayQuantity(item)}</Text>
                   </View>
                 </View>
               ))}
@@ -656,7 +1003,7 @@ export default function SmartScannerScreen({ navigation }) {
           )}
         </View>
 
-        {/* Action Buttons - Below the list */}
+        {/* Action Buttons */}
         {detectedItems.length > 0 && (
           <View style={styles.actionButtonsContainer}>
             <TouchableOpacity style={styles.improveAIButton} onPress={uploadImageForAIImprovement}>
@@ -664,7 +1011,7 @@ export default function SmartScannerScreen({ navigation }) {
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.saveDataButton} onPress={submitList}>
-              <Text style={styles.saveDataButtonText}>💾 Save Data</Text>
+              <Text style={styles.saveDataButtonText}>💾 Save to Database</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -675,13 +1022,39 @@ export default function SmartScannerScreen({ navigation }) {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Add Item Manually</Text>
-            <Text style={styles.modalSubtitle}>Select waste category:</Text>
+            <Text style={styles.modalSubtitle}>
+              Select waste category (all recyclable):
+            </Text>
             
-            <Text style={styles.quantityLabel}>Quantity:</Text>
+            {/* Selected Category Display */}
+            {selectedCategory && (
+              <View style={styles.selectedCategoryDisplay}>
+                <Text style={styles.selectedCategoryTitle}>Selected: {selectedCategory.label}</Text>
+                <Text style={styles.selectedCategoryUnit}>Unit: {selectedCategory.unit}</Text>
+                <Text style={styles.selectedCategoryPoints}>
+                  Points: {selectedCategory.class === 'Paper' 
+                    ? `${selectedCategory.pointsPerKg} per kg` 
+                    : `${selectedCategory.pointsPerUnit} per unit`}
+                </Text>
+              </View>
+            )}
+
+            {/* Quantity/Weight Input */}
+            <Text style={styles.quantityLabel}>
+              {selectedCategory?.class === 'Paper' ? 'Weight (kg):' : 'Quantity:'}
+            </Text>
             <View style={styles.quantityModalControls}>
               <TouchableOpacity 
                 style={styles.quantityButton} 
-                onPress={() => setManualQuantity(Math.max(1, parseInt(manualQuantity) - 1).toString())}
+                onPress={() => {
+                  const current = parseFloat(manualQuantity) || (selectedCategory?.class === 'Paper' ? 0.5 : 1);
+                  const decrement = selectedCategory?.class === 'Paper' ? 0.1 : 1;
+                  const newValue = Math.max(
+                    selectedCategory?.class === 'Paper' ? 0.1 : 1,
+                    parseFloat((current - decrement).toFixed(2))
+                  );
+                  setManualQuantity(newValue.toString());
+                }}
               >
                 <Text style={styles.quantityButtonText}>-</Text>
               </TouchableOpacity>
@@ -690,18 +1063,30 @@ export default function SmartScannerScreen({ navigation }) {
                 style={styles.quantityModalInput}
                 value={manualQuantity}
                 onChangeText={setManualQuantity}
-                keyboardType="numeric"
-                maxLength={2}
+                keyboardType="decimal-pad"
+                maxLength={selectedCategory?.class === 'Paper' ? 6 : 3}
+                placeholder={selectedCategory?.class === 'Paper' ? '0.5' : '1'}
               />
               
               <TouchableOpacity 
                 style={styles.quantityButton} 
-                onPress={() => setManualQuantity((parseInt(manualQuantity) || 1 + 1).toString())}
+                onPress={() => {
+                  const current = parseFloat(manualQuantity) || (selectedCategory?.class === 'Paper' ? 0.5 : 1);
+                  const increment = selectedCategory?.class === 'Paper' ? 0.1 : 1;
+                  const newValue = parseFloat((current + increment).toFixed(2));
+                  setManualQuantity(newValue.toString());
+                }}
               >
                 <Text style={styles.quantityButtonText}>+</Text>
               </TouchableOpacity>
             </View>
+            {selectedCategory && (
+              <Text style={styles.unitDisplay}>
+                {parseFloat(manualQuantity) || 0} {selectedCategory.unit}
+              </Text>
+            )}
 
+            {/* Category List */}
             <FlatList
               data={WASTE_CATEGORIES}
               renderItem={renderCategoryItem}
@@ -710,15 +1095,32 @@ export default function SmartScannerScreen({ navigation }) {
               showsVerticalScrollIndicator={false}
             />
 
+            {/* Action Buttons */}
             <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.cancelButton} onPress={() => setShowManualModal(false)}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+              <TouchableOpacity 
+                style={[styles.actionButton, styles.cancelButton]} 
+                onPress={() => {
+                  setShowManualModal(false);
+                  setSelectedCategory(null);
+                  setManualQuantity('1');
+                  setManualUnit('units');
+                }}
+              >
+                <Text style={styles.actionButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.actionButton, styles.addButton, !selectedCategory && styles.disabledButton]} 
+                onPress={addManualItem}
+                disabled={!selectedCategory}
+              >
+                <Text style={styles.actionButtonText}>Add Item</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -739,7 +1141,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
-    alignItems: 'center',
   },
   title: {
     fontSize: 24,
@@ -759,6 +1160,59 @@ const styles = StyleSheet.create({
     marginTop: 4,
     color: '#666',
     fontStyle: 'italic',
+  },
+  userStatusContainer: {
+    marginTop: 12,
+    padding: 10,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+  },
+  userInfoContainer: {
+    alignItems: 'center',
+  },
+  userWelcome: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1976D2',
+    marginBottom: 4,
+  },
+  userDetails: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  userWarning: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#dc3545',
+    marginBottom: 8,
+  },
+  refreshUserButton: {
+    backgroundColor: '#6c757d',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginTop: 4,
+  },
+  refreshUserText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  loginButton: {
+    backgroundColor: '#007bff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    marginTop: 4,
+  },
+  loginButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '500',
   },
   imageContainer: {
     height: 300,
@@ -786,7 +1240,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   processingOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -811,7 +1265,6 @@ const styles = StyleSheet.create({
   spacer: {
     height: 10,
   },
-  // New manual input header style
   manualInputHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -847,6 +1300,7 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 8,
   },
   stat: {
     fontSize: 14,
@@ -856,6 +1310,18 @@ const styles = StyleSheet.create({
   meritHighlight: {
     color: '#FF9800',
     fontWeight: 'bold',
+  },
+  weightContainer: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#BBDEFB',
+  },
+  weightText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1976D2',
+    textAlign: 'center',
   },
   resultsContainer: {
     backgroundColor: '#fff',
@@ -882,10 +1348,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8F5E8',
     borderLeftColor: '#4CAF50',
   },
-  nonRecyclableCard: {
-    backgroundColor: '#FFEBEE',
-    borderLeftColor: '#FF5722',
-  },
   itemHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -900,10 +1362,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
+  itemClassRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
   itemClass: {
     fontSize: 14,
     color: '#666',
-    marginTop: 2,
+    fontWeight: '500',
+  },
+  itemUnit: {
+    fontSize: 12,
+    color: '#888',
+    marginLeft: 6,
     fontWeight: '500',
   },
   deleteButton: {
@@ -930,9 +1402,6 @@ const styles = StyleSheet.create({
   recyclable: {
     color: '#4CAF50',
   },
-  nonRecyclable: {
-    color: '#FF5722',
-  },
   meritContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -950,10 +1419,14 @@ const styles = StyleSheet.create({
   meritValue: {
     fontSize: 14,
     color: '#666',
+    textAlign: 'right',
+    flex: 1,
+    marginLeft: 10,
   },
   totalMerit: {
     fontWeight: 'bold',
     color: '#FF9800',
+    marginLeft: 4,
   },
   quantityContainer: {
     flexDirection: 'row',
@@ -992,10 +1465,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     marginHorizontal: 8,
-    width: 50,
+    width: 60,
     textAlign: 'center',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  unitDisplay: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 8,
+    fontStyle: 'italic',
   },
   // Action buttons container
   actionButtonsContainer: {
@@ -1051,11 +1530,35 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     color: '#666',
   },
+  selectedCategoryDisplay: {
+    backgroundColor: '#E3F2FD',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#2196F3',
+  },
+  selectedCategoryTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1976D2',
+    marginBottom: 4,
+  },
+  selectedCategoryUnit: {
+    fontSize: 14,
+    color: '#1976D2',
+    marginBottom: 4,
+  },
+  selectedCategoryPoints: {
+    fontSize: 14,
+    color: '#FF9800',
+    fontWeight: '600',
+  },
   quantityModalControls: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: 8,
   },
   quantityModalInput: {
     borderWidth: 1,
@@ -1064,41 +1567,58 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginHorizontal: 12,
-    width: 60,
+    width: 80,
     textAlign: 'center',
     fontSize: 16,
     fontWeight: 'bold',
   },
   categoriesList: {
-    maxHeight: 400,
+    maxHeight: 300,
   },
   categoryItem: {
     padding: 16,
     borderRadius: 8,
     marginBottom: 8,
     borderLeftWidth: 4,
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
   recyclableCategory: {
     backgroundColor: '#E8F5E8',
     borderLeftColor: '#4CAF50',
   },
-  nonRecyclableCategory: {
-    backgroundColor: '#FFEBEE',
-    borderLeftColor: '#FF5722',
+  selectedCategory: {
+    borderColor: '#2196F3',
+    borderWidth: 2,
+    backgroundColor: '#E3F2FD',
   },
   categoryContent: {
     flex: 1,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
   },
   categoryLabel: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 4,
+  },
+  categoryUnit: {
+    fontSize: 12,
+    color: '#666',
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
   categoryPoints: {
     fontSize: 14,
     fontWeight: '600',
     color: '#FF9800',
+    marginBottom: 4,
   },
   existingItemText: {
     fontSize: 12,
@@ -1106,16 +1626,34 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: 2,
   },
-  modalButtons: {
-    marginTop: 16,
+  selectedIndicator: {
+    fontSize: 12,
+    color: '#2196F3',
+    fontWeight: 'bold',
+    marginTop: 4,
   },
-  cancelButton: {
-    backgroundColor: '#f44336',
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    gap: 10,
+  },
+  actionButton: {
+    flex: 1,
     padding: 12,
     borderRadius: 6,
     alignItems: 'center',
   },
-  cancelButtonText: {
+  cancelButton: {
+    backgroundColor: '#f44336',
+  },
+  addButton: {
+    backgroundColor: '#4CAF50',
+  },
+  disabledButton: {
+    backgroundColor: '#cccccc',
+  },
+  actionButtonText: {
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
