@@ -20,6 +20,9 @@ from reportlab.lib.utils import ImageReader
 import io
 import base64
 
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
+
 # ============ DATABASE IMPORTS WITH CONNECTION POOLING ============
 import mysql.connector
 from mysql.connector import pooling, Error
@@ -36,6 +39,9 @@ CORS(app)  # Enable CORS for all routes
 interpreter = None
 CLASS_NAMES = ['Plastic', 'Glass', 'Metal', 'Paper', 'Non-Recyclable', 'Tyre']
 
+# ============ SCHEDULER CONFIGURATION ============
+scheduler = None
+
 # ============ MYSQL DATABASE CONFIGURATION WITH POOLING ============
 MYSQL_CONFIG = {
     'host': 'localhost',
@@ -44,18 +50,30 @@ MYSQL_CONFIG = {
     'database': 'utm_remerit',
     'port': 3306,
     'pool_name': 'utm_remerit_pool',
-    'pool_size': 5,
-    'pool_reset_session': True
+    'pool_size': 20,  # Increased from 5 to 20
+    'pool_reset_session': True,
+    'connect_timeout': 30,  # Added
+    'connection_timeout': 10  # Added
 }
-
 # Create connection pool
 connection_pool = None
 
 def init_db_pool():
-    """Initialize database connection pool"""
+    """Initialize database connection pool - FIXED VERSION"""
     global connection_pool
     try:
-        connection_pool = mysql.connector.pooling.MySQLConnectionPool(**MYSQL_CONFIG)
+        # Remove problematic parameters
+        pool_config = {
+            'host': MYSQL_CONFIG['host'],
+            'user': MYSQL_CONFIG['user'],
+            'password': MYSQL_CONFIG['password'],
+            'database': MYSQL_CONFIG['database'],
+            'port': MYSQL_CONFIG['port'],
+            'pool_name': MYSQL_CONFIG['pool_name'],
+            'pool_size': MYSQL_CONFIG['pool_size']
+        }
+        
+        connection_pool = mysql.connector.pooling.MySQLConnectionPool(**pool_config)
         logger.info("✅ Database connection pool created successfully")
         return True
     except Error as e:
@@ -63,32 +81,70 @@ def init_db_pool():
         return False
 
 def get_db_connection():
-    """Get connection from pool"""
+    """Get connection from pool - FIXED VERSION"""
+    global connection_pool
+    
+    # Initialize pool if needed
+    if connection_pool is None:
+        if not init_db_pool():
+            # Fallback to direct connection
+            try:
+                connection = mysql.connector.connect(
+                    host=MYSQL_CONFIG['host'],
+                    user=MYSQL_CONFIG['user'],
+                    password=MYSQL_CONFIG['password'],
+                    database=MYSQL_CONFIG['database'],
+                    port=MYSQL_CONFIG['port']
+                )
+                logger.info("✅ Created direct database connection (pool failed)")
+                return connection
+            except Error as e:
+                logger.error(f"❌ Direct connection also failed: {e}")
+                return None
+    
     try:
-        if connection_pool is None:
-            init_db_pool()
-        
         connection = connection_pool.get_connection()
-        return connection
+        if connection and connection.is_connected():
+            logger.debug("✅ Got connection from pool")
+            return connection
+        else:
+            logger.warning("⚠️ Got invalid connection from pool, using fallback")
+            # Fallback to direct connection
+            return mysql.connector.connect(
+                host=MYSQL_CONFIG['host'],
+                user=MYSQL_CONFIG['user'],
+                password=MYSQL_CONFIG['password'],
+                database=MYSQL_CONFIG['database'],
+                port=MYSQL_CONFIG['port']
+            )
     except Error as e:
-        logger.error(f"Database connection error: {e}")
+        logger.error(f"❌ Error getting connection from pool: {e}")
         # Fallback to direct connection
         try:
-            connection = mysql.connector.connect(**{k: v for k, v in MYSQL_CONFIG.items() if not k.startswith('pool_')})
-            return connection
+            return mysql.connector.connect(
+                host=MYSQL_CONFIG['host'],
+                user=MYSQL_CONFIG['user'],
+                password=MYSQL_CONFIG['password'],
+                database=MYSQL_CONFIG['database'],
+                port=MYSQL_CONFIG['port']
+            )
         except Error as e2:
-            logger.error(f"Fallback connection also failed: {e2}")
+            logger.error(f"❌ Fallback connection also failed: {e2}")
             return None
 
 def close_db_connection(connection, cursor=None):
-    """Close database connection properly"""
+    """Close database connection properly - SIMPLIFIED VERSION"""
     try:
         if cursor:
             cursor.close()
-        if connection:
+    except:
+        pass  # Ignore cursor close errors
+    
+    try:
+        if connection and hasattr(connection, 'close'):
             connection.close()
-    except Error as e:
-        logger.error(f"Error closing database connection: {e}")
+    except:
+        pass  # Ignore connection close errors
 
 # Database connection context manager
 class DatabaseConnection:
@@ -389,9 +445,19 @@ def get_user_profile(user_id):
 print("🔍 Checking existing endpoints...")
 
 @app.route('/api/admin/system-stats', methods=['GET'])
-def get_admin_system_stats():  # Changed name to avoid conflict
+def get_admin_system_stats():
+    """Get system stats for admin dashboard"""
     try:
         print("🔍 Fetching system stats from database...")
+        
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({
+                'success': False,
+                'message': 'Database connection failed'
+            }), 500
+        
+        cursor = connection.cursor(dictionary=True)
         
         # Get total users
         cursor.execute("SELECT COUNT(*) as total FROM User WHERE role = 'student'")
@@ -426,6 +492,9 @@ def get_admin_system_stats():  # Changed name to avoid conflict
             WHERE participationStatus = 'Completed'
         """)
         participation_data = cursor.fetchone()
+        
+        cursor.close()
+        connection.close()
         
         response_data = {
             'success': True,
@@ -499,6 +568,1989 @@ def save_admin_layout():
             'success': False,
             'error': str(e)
         }), 500
+
+# ============ NOTIFICATION ENDPOINTS ============
+
+@app.route('/api/notifications', methods=['GET'])
+def get_notifications():
+    """Get notifications for a user"""
+    try:
+        user_id = request.args.get('userID')
+        unread_only = request.args.get('unreadOnly', 'false').lower() == 'true'
+        limit = int(request.args.get('limit', 50))
+        offset = int(request.args.get('offset', 0))
+        
+        if not user_id:
+            return jsonify({'success': False, 'error': 'User ID is required'}), 400
+        
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Build query
+        query = """
+            SELECT 
+                n.notificationID,
+                n.userID,
+                n.title,
+                n.message,
+                n.metadata,
+                n.isRead,
+                n.createdDate,
+                n.readDate,
+                nt.typeName as type,
+                nt.icon,
+                nt.color
+            FROM Notification n
+            JOIN NotificationType nt ON n.typeID = nt.typeID
+            WHERE n.userID = %s
+        """
+        params = [user_id]
+        
+        if unread_only:
+            query += " AND n.isRead = FALSE"
+        
+        query += " ORDER BY n.createdDate DESC LIMIT %s OFFSET %s"
+        params.extend([limit, offset])
+        
+        cursor.execute(query, params)
+        notifications = cursor.fetchall()
+        
+        # Get unread count
+        cursor.execute("""
+            SELECT COUNT(*) as unreadCount 
+            FROM Notification 
+            WHERE userID = %s AND isRead = FALSE
+        """, (user_id,))
+        unread_result = cursor.fetchone()
+        
+        cursor.close()
+        connection.close()
+        
+        # Convert datetime objects to strings
+        for notification in notifications:
+            if notification['createdDate']:
+                notification['createdDate'] = notification['createdDate'].isoformat()
+            if notification['readDate']:
+                notification['readDate'] = notification['readDate'].isoformat()
+        
+        return jsonify({
+            'success': True,
+            'notifications': notifications,
+            'unreadCount': unread_result['unreadCount'] if unread_result else 0,
+            'totalCount': len(notifications)
+        })
+        
+    except Error as e:
+        logger.error(f"Database error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/notifications/<notification_id>/read', methods=['PUT'])
+def mark_notification_read(notification_id):
+    """Mark a notification as read"""
+    try:
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor()
+        
+        cursor.execute("""
+            UPDATE Notification 
+            SET isRead = TRUE, readDate = NOW() 
+            WHERE notificationID = %s
+        """, (notification_id,))
+        
+        connection.commit()
+        
+        affected_rows = cursor.rowcount
+        
+        cursor.close()
+        connection.close()
+        
+        if affected_rows == 0:
+            return jsonify({'success': False, 'error': 'Notification not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'message': 'Notification marked as read'
+        })
+        
+    except Error as e:
+        logger.error(f"Database error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/notifications/mark-all-read', methods=['PUT'])
+def mark_all_notifications_read():
+    """Mark all notifications as read for a user"""
+    try:
+        user_id = request.json.get('userID')
+        
+        if not user_id:
+            return jsonify({'success': False, 'error': 'User ID is required'}), 400
+        
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor()
+        
+        cursor.execute("""
+            UPDATE Notification 
+            SET isRead = TRUE, readDate = NOW() 
+            WHERE userID = %s AND isRead = FALSE
+        """, (user_id,))
+        
+        connection.commit()
+        
+        affected_rows = cursor.rowcount
+        
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Marked {affected_rows} notifications as read'
+        })
+        
+    except Error as e:
+        logger.error(f"Database error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/notifications/<notification_id>', methods=['DELETE'])
+def delete_notification(notification_id):
+    """Delete a notification"""
+    try:
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor()
+        
+        cursor.execute("DELETE FROM Notification WHERE notificationID = %s", (notification_id,))
+        
+        connection.commit()
+        
+        affected_rows = cursor.rowcount
+        
+        cursor.close()
+        connection.close()
+        
+        if affected_rows == 0:
+            return jsonify({'success': False, 'error': 'Notification not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'message': 'Notification deleted successfully'
+        })
+        
+    except Error as e:
+        logger.error(f"Database error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ============ LAYOUT PREFERENCES ENDPOINTS ============
+
+@app.route('/api/userpreferencelayout/<user_id>', methods=['GET', 'PUT'])
+def user_preference_layout(user_id):
+    """Handle user layout preferences - SIMPLIFIED VERSION for React Native"""
+    try:
+        if request.method == 'GET':
+            connection = get_db_connection()
+            if not connection:
+                # Return default layout if database connection fails
+                return jsonify({
+                    'success': True,
+                    'preferences': {
+                        'layoutConfig': {
+                            'showWelcomeCard': True,
+                            'showQuickActions': True,
+                            'showCategoryPerformance': True,
+                            'showRecentActivities': True,
+                            'showUpcomingEvents': True,
+                            'showNotifications': True,
+                        }
+                    }
+                })
+            
+            cursor = connection.cursor(dictionary=True)
+            
+            # SIMPLIFIED QUERY - matches your new table structure
+            cursor.execute("""
+                SELECT layoutConfig 
+                FROM UserLayoutPreference 
+                WHERE userID = %s
+            """, (user_id,))
+            
+            preferences = cursor.fetchone()
+            
+            cursor.close()
+            connection.close()
+            
+            if preferences and preferences['layoutConfig']:
+                # Parse layoutConfig if it's a string
+                layout_config = preferences['layoutConfig']
+                if isinstance(layout_config, str):
+                    try:
+                        layout_config = json.loads(layout_config)
+                    except:
+                        layout_config = {}
+                
+                return jsonify({
+                    'success': True,
+                    'preferences': {
+                        'layoutConfig': layout_config
+                    }
+                })
+            else:
+                # Return defaults if no preferences found
+                return jsonify({
+                    'success': True,
+                    'preferences': {
+                        'layoutConfig': {
+                            'showWelcomeCard': True,
+                            'showQuickActions': True,
+                            'showCategoryPerformance': True,
+                            'showRecentActivities': True,
+                            'showUpcomingEvents': True,
+                            'showNotifications': True,
+                        }
+                    }
+                })
+        
+        elif request.method == 'PUT':
+            data = request.json
+            user_id = data.get('userID')
+            layout_config = data.get('layoutConfig', {})
+            
+            if not user_id:
+                return jsonify({'success': False, 'error': 'User ID is required'}), 400
+            
+            connection = get_db_connection()
+            if not connection:
+                return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+            
+            cursor = connection.cursor()
+            
+            # Check if preference exists
+            cursor.execute("SELECT preferenceID FROM UserLayoutPreference WHERE userID = %s", (user_id,))
+            existing = cursor.fetchone()
+            
+            if existing:
+                # Update existing
+                cursor.execute("""
+                    UPDATE UserLayoutPreference 
+                    SET layoutConfig = %s, updatedAt = NOW()
+                    WHERE userID = %s
+                """, (
+                    json.dumps(layout_config) if isinstance(layout_config, dict) else layout_config,
+                    user_id
+                ))
+            else:
+                # Insert new
+                cursor.execute("""
+                    INSERT INTO UserLayoutPreference (userID, layoutConfig)
+                    VALUES (%s, %s)
+                """, (
+                    user_id,
+                    json.dumps(layout_config) if isinstance(layout_config, dict) else layout_config
+                ))
+            
+            connection.commit()
+            
+            cursor.close()
+            connection.close()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Layout preferences saved successfully',
+                'userID': user_id
+            })
+    
+    except Error as e:
+        logger.error(f"Database error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    
+# ============ ADMIN DASHBOARD DATA ENDPOINTS ============
+
+@app.route('/api/admin/dashboard/quick-stats', methods=['GET'])
+def get_admin_quick_stats():
+    """Get quick stats for admin dashboard"""
+    try:
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Get total students
+        cursor.execute("SELECT COUNT(*) as total FROM User WHERE role = 'student'")
+        total_students = cursor.fetchone()['total']
+        
+        # Get total events
+        cursor.execute("SELECT COUNT(*) as total FROM Event")
+        total_events = cursor.fetchone()['total']
+        
+        # Get total points
+        cursor.execute("SELECT SUM(totalPoints) as total FROM Student")
+        total_points_result = cursor.fetchone()
+        total_points = total_points_result['total'] if total_points_result['total'] else 0
+        
+        # Get active campaigns
+        cursor.execute("SELECT COUNT(*) as total FROM Event WHERE status = 'Ongoing'")
+        active_campaigns = cursor.fetchone()['total']
+        
+        # Get today's registrations
+        cursor.execute("""
+            SELECT COUNT(*) as total 
+            FROM Participation 
+            WHERE DATE(registrationDate) = CURDATE()
+        """)
+        today_registrations = cursor.fetchone()['total']
+        
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'quickStats': {
+                'totalStudents': total_students,
+                'totalEvents': total_events,
+                'totalPoints': total_points,
+                'activeCampaigns': active_campaigns,
+                'todayRegistrations': today_registrations
+            }
+        })
+        
+    except Error as e:
+        logger.error(f"Database error: {e}")
+        return jsonify({
+            'success': True,
+            'message': 'Using fallback data',
+            'quickStats': {
+                'totalStudents': 1256,
+                'totalEvents': 42,
+                'totalPoints': 158750,
+                'activeCampaigns': 3,
+                'todayRegistrations': 12
+            }
+        })
+
+# ============ NOTIFICATION SETTINGS ENDPOINTS ============
+
+@app.route('/api/notification-settings/<user_id>', methods=['GET', 'PUT'])
+def handle_notification_settings(user_id):
+    """Handle user notification preferences"""
+    try:
+        if request.method == 'GET':
+            connection = get_db_connection()
+            if not connection:
+                return jsonify({
+                    'success': True,
+                    'settings': {
+                        'emailNotifications': True,
+                        'pushNotifications': True,
+                        'recycleReminders': True,
+                        'pointUpdates': True,
+                        'promotionalOffers': False
+                    }
+                })
+            
+            cursor = connection.cursor(dictionary=True)
+            
+            cursor.execute("""
+                SELECT 
+                    emailNotifications,
+                    pushNotifications,
+                    recycleReminders,
+                    pointUpdates,
+                    promotionalOffers
+                FROM UserNotificationSettings 
+                WHERE userID = %s
+            """, (user_id,))
+            
+            settings = cursor.fetchone()
+            
+            cursor.close()
+            connection.close()
+            
+            if settings:
+                return jsonify({
+                    'success': True,
+                    'settings': settings
+                })
+            else:
+                # Default settings for users
+                default_settings = {
+                    'emailNotifications': True,
+                    'pushNotifications': True,
+                    'recycleReminders': True,
+                    'pointUpdates': True,
+                    'promotionalOffers': False
+                }
+                
+                # Check if user is admin or student to adjust defaults
+                try:
+                    conn = get_db_connection()
+                    if conn:
+                        cur = conn.cursor(dictionary=True)
+                        cur.execute("SELECT role FROM User WHERE userID = %s", (user_id,))
+                        user = cur.fetchone()
+                        cur.close()
+                        conn.close()
+                        
+                        if user and user['role'] == 'admin':
+                            # Admins might want different defaults
+                            default_settings['promotionalOffers'] = False
+                            default_settings['recycleReminders'] = False  # Admins don't need recycle reminders
+                except:
+                    pass
+                
+                return jsonify({
+                    'success': True,
+                    'settings': default_settings,
+                    'isDefault': True
+                })
+        
+        elif request.method == 'PUT':
+            data = request.json
+            email_notifications = data.get('emailNotifications', True)
+            push_notifications = data.get('pushNotifications', True)
+            recycle_reminders = data.get('recycleReminders', True)
+            point_updates = data.get('pointUpdates', True)
+            promotional_offers = data.get('promotionalOffers', False)
+            
+            connection = get_db_connection()
+            if not connection:
+                return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+            
+            cursor = connection.cursor(dictionary=True)
+            
+            # Check if settings exist
+            cursor.execute("SELECT userID FROM UserNotificationSettings WHERE userID = %s", (user_id,))
+            existing = cursor.fetchone()
+            
+            if existing:
+                # Update existing
+                cursor.execute("""
+                    UPDATE UserNotificationSettings 
+                    SET 
+                        emailNotifications = %s,
+                        pushNotifications = %s,
+                        recycleReminders = %s,
+                        pointUpdates = %s,
+                        promotionalOffers = %s,
+                        updatedDateTime = NOW()
+                    WHERE userID = %s
+                """, (
+                    bool(email_notifications),
+                    bool(push_notifications),
+                    bool(recycle_reminders),
+                    bool(point_updates),
+                    bool(promotional_offers),
+                    user_id
+                ))
+            else:
+                # Insert new
+                cursor.execute("""
+                    INSERT INTO UserNotificationSettings 
+                    (userID, emailNotifications, pushNotifications, recycleReminders, pointUpdates, promotionalOffers)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, (
+                    user_id,
+                    bool(email_notifications),
+                    bool(push_notifications),
+                    bool(recycle_reminders),
+                    bool(point_updates),
+                    bool(promotional_offers)
+                ))
+            
+            connection.commit()
+            
+            cursor.close()
+            connection.close()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Notification settings saved successfully',
+                'userID': user_id
+            })
+    
+    except Error as e:
+        logger.error(f"Database error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ============ SMART NOTIFICATION CREATION FUNCTION ============
+
+def create_notification(user_id, notification_type, title, message, metadata=None, check_preferences=True):
+    """Create notification with preference checking"""
+    try:
+        # If check_preferences is True, verify user wants this type of notification
+        if check_preferences:
+            connection = get_db_connection()
+            if connection:
+                cursor = connection.cursor(dictionary=True)
+                
+                # Get user's role first
+                cursor.execute("SELECT role FROM User WHERE userID = %s", (user_id,))
+                user = cursor.fetchone()
+                
+                if user:
+                    # Get notification settings
+                    cursor.execute("""
+                        SELECT * FROM UserNotificationSettings WHERE userID = %s
+                    """, (user_id,))
+                    settings = cursor.fetchone()
+                    
+                    cursor.close()
+                    connection.close()
+                    
+                    # If no settings exist, create defaults based on user role
+                    if not settings:
+                        settings = {
+                            'emailNotifications': True,
+                            'pushNotifications': True,
+                            'recycleReminders': user['role'] == 'student',  # Students get recycle reminders
+                            'pointUpdates': user['role'] == 'student',     # Students get point updates
+                            'promotionalOffers': user['role'] == 'student'  # Students get promotional offers
+                        }
+                    
+                    # Check if user should receive this type of notification
+                    if notification_type == 'recycle_reminder' and not settings.get('recycleReminders', True):
+                        logger.info(f"User {user_id} has disabled recycle reminders")
+                        return False
+                    elif notification_type == 'points_update' and not settings.get('pointUpdates', True):
+                        logger.info(f"User {user_id} has disabled point updates")
+                        return False
+                    elif notification_type == 'promotional' and not settings.get('promotionalOffers', False):
+                        logger.info(f"User {user_id} has disabled promotional offers")
+                        return False
+                    elif notification_type == 'email' and not settings.get('emailNotifications', True):
+                        logger.info(f"User {user_id} has disabled email notifications")
+                        return False
+        
+        # Map notification types to type IDs
+        type_mapping = {
+            'system': 1,
+            'event': 2,
+            'achievement': 3,
+            'reminder': 4,
+            'reward': 5,
+            'recycle_reminder': 6,
+            'points_update': 7,
+            'promotional': 8,
+            'admin_alert': 9,
+            'user_management': 10,
+            'campaign_update': 11
+        }
+        
+        type_id = type_mapping.get(notification_type, 1)  # Default to system
+        
+        connection = get_db_connection()
+        if not connection:
+            logger.error("Cannot create notification: Database connection failed")
+            return False
+        
+        cursor = connection.cursor()
+        
+        # Generate notification ID
+        notification_id = f"NOTIF{datetime.now().strftime('%Y%m%d%H%M%S')}{random.randint(100, 999)}"
+        
+        # Insert notification
+        cursor.execute("""
+            INSERT INTO Notification (notificationID, userID, typeID, title, message, metadata, createdDate)
+            VALUES (%s, %s, %s, %s, %s, %s, NOW())
+        """, (
+            notification_id,
+            user_id,
+            type_id,
+            title,
+            message,
+            json.dumps(metadata) if metadata else None
+        ))
+        
+        connection.commit()
+        
+        cursor.close()
+        connection.close()
+        
+        logger.info(f"✅ Notification created: {notification_id} for user {user_id}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"❌ Error creating notification: {e}")
+        return False
+
+# ============ SPECIFIC NOTIFICATION CREATION ENDPOINTS ============
+
+@app.route('/api/notifications/create-recycle-reminder', methods=['POST'])
+def create_recycle_reminder():
+    """Create a recycle reminder notification for students"""
+    try:
+        data = request.get_json()
+        user_id = data.get('userID')
+        student_name = data.get('studentName', '')
+        reminder_type = data.get('reminderType', 'daily')
+        
+        if not user_id:
+            return jsonify({'success': False, 'error': 'User ID is required'}), 400
+        
+        # Check if user is a student
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT role FROM User WHERE userID = %s", (user_id,))
+        user = cursor.fetchone()
+        
+        cursor.close()
+        connection.close()
+        
+        if not user:
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+        
+        # Only students get recycle reminders
+        if user['role'] != 'student':
+            return jsonify({'success': False, 'error': 'Recycle reminders are only for students'}), 400
+        
+        # Create reminder messages based on type
+        if reminder_type == 'daily':
+            title = "Daily Recycling Reminder ♻️"
+            message = f"Hi {student_name}, don't forget to recycle today! Every item counts towards your points and helps our campus environment."
+        elif reminder_type == 'weekly':
+            title = "Weekly Recycling Summary 📊"
+            message = f"Hi {student_name}, it's the end of the week! Check your recycling progress and keep up the good work!"
+        elif reminder_type == 'streak':
+            title = "Keep Your Streak Going! 🔥"
+            message = f"Hi {student_name}, you're on a recycling streak! Don't break it - recycle today to maintain your progress."
+        else:
+            title = "Time to Recycle! ♻️"
+            message = f"Hi {student_name}, it's a great time to recycle and earn points!"
+        
+        # Create the notification
+        success = create_notification(
+            user_id=user_id,
+            notification_type='recycle_reminder',
+            title=title,
+            message=message,
+            metadata={
+                'reminderType': reminder_type,
+                'timestamp': datetime.now().isoformat(),
+                'studentName': student_name
+            }
+        )
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Recycle reminder created successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to create recycle reminder'
+            }), 500
+        
+    except Exception as e:
+        logger.error(f"Error creating recycle reminder: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/notifications/create-points-update', methods=['POST'])
+def create_points_update():
+    """Create a points update notification"""
+    try:
+        data = request.get_json()
+        user_id = data.get('userID')
+        points_change = data.get('pointsChange', 0)
+        reason = data.get('reason', 'points earned')
+        student_name = data.get('studentName', '')
+        
+        if not user_id:
+            return jsonify({'success': False, 'error': 'User ID is required'}), 400
+        
+        # Determine title and message based on points change
+        if points_change > 0:
+            title = f"🎉 +{points_change} Points Earned!"
+            message = f"Hi {student_name}, you've earned {points_change} points for {reason}!"
+        elif points_change < 0:
+            title = f"⚠️ {points_change} Points Deducted"
+            message = f"Hi {student_name}, {abs(points_change)} points were deducted. Reason: {reason}"
+        else:
+            title = "📊 Points Update"
+            message = f"Hi {student_name}, your points have been updated."
+        
+        # Create the notification
+        success = create_notification(
+            user_id=user_id,
+            notification_type='points_update',
+            title=title,
+            message=message,
+            metadata={
+                'pointsChange': points_change,
+                'reason': reason,
+                'timestamp': datetime.now().isoformat()
+            }
+        )
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Points update notification created successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to create points update notification'
+            }), 500
+        
+    except Exception as e:
+        logger.error(f"Error creating points update: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/notifications/create-promotional', methods=['POST'])
+def create_promotional_notification():
+    """Create a promotional notification"""
+    try:
+        data = request.get_json()
+        user_ids = data.get('userIDs', [])  # Can be single user or list of users
+        title = data.get('title', 'Special Offer!')
+        message = data.get('message', '')
+        offer_details = data.get('offerDetails', {})
+        
+        if not user_ids:
+            return jsonify({'success': False, 'error': 'User IDs are required'}), 400
+        
+        # Convert single user ID to list
+        if not isinstance(user_ids, list):
+            user_ids = [user_ids]
+        
+        successful_count = 0
+        failed_count = 0
+        
+        for user_id in user_ids:
+            success = create_notification(
+                user_id=user_id,
+                notification_type='promotional',
+                title=title,
+                message=message,
+                metadata={
+                    'offerDetails': offer_details,
+                    'timestamp': datetime.now().isoformat(),
+                    'notificationType': 'promotional'
+                }
+            )
+            
+            if success:
+                successful_count += 1
+            else:
+                failed_count += 1
+        
+        return jsonify({
+            'success': True,
+            'message': f'Promotional notifications sent: {successful_count} successful, {failed_count} failed',
+            'sentCount': successful_count,
+            'failedCount': failed_count
+        })
+        
+    except Exception as e:
+        logger.error(f"Error creating promotional notification: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ============ ADMIN NOTIFICATION ENDPOINTS ============
+
+@app.route('/api/admin/notifications/create-broadcast', methods=['POST'])
+def create_admin_broadcast():
+    """Create broadcast notification for all users (admin only)"""
+    try:
+        data = request.get_json()
+        admin_id = data.get('adminID')
+        title = data.get('title', 'Admin Announcement')
+        message = data.get('message', '')
+        notification_type = data.get('type', 'system')
+        target_roles = data.get('targetRoles', ['all'])  # ['all', 'students', 'admins']
+        
+        if not admin_id:
+            return jsonify({'success': False, 'error': 'Admin ID is required'}), 400
+        
+        # Verify admin
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT role FROM User WHERE userID = %s", (admin_id,))
+        admin = cursor.fetchone()
+        
+        if not admin or admin['role'] != 'admin':
+            cursor.close()
+            connection.close()
+            return jsonify({'success': False, 'error': 'Admin access required'}), 403
+        
+        # Get target users
+        if 'all' in target_roles:
+            cursor.execute("SELECT userID FROM User")
+        elif 'students' in target_roles:
+            cursor.execute("SELECT userID FROM User WHERE role = 'student'")
+        elif 'admins' in target_roles:
+            cursor.execute("SELECT userID FROM User WHERE role = 'admin'")
+        else:
+            cursor.execute("SELECT userID FROM User WHERE role IN %s", (tuple(target_roles),))
+        
+        users = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        
+        successful_count = 0
+        failed_count = 0
+        
+        for user in users:
+            success = create_notification(
+                user_id=user['userID'],
+                notification_type=notification_type,
+                title=title,
+                message=message,
+                metadata={
+                    'fromAdmin': admin_id,
+                    'broadcast': True,
+                    'targetRoles': target_roles,
+                    'timestamp': datetime.now().isoformat()
+                },
+                check_preferences=False  # Admin broadcasts ignore preferences
+            )
+            
+            if success:
+                successful_count += 1
+            else:
+                failed_count += 1
+        
+        # Also create a notification for the admin to confirm
+        create_notification(
+            user_id=admin_id,
+            notification_type='system',
+            title='Broadcast Sent',
+            message=f'Your broadcast "{title}" was sent to {successful_count} users.',
+            metadata={
+                'broadcastStats': {
+                    'successful': successful_count,
+                    'failed': failed_count,
+                    'total': len(users)
+                }
+            }
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': f'Broadcast sent to {successful_count} users successfully',
+            'stats': {
+                'totalUsers': len(users),
+                'successful': successful_count,
+                'failed': failed_count
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error creating admin broadcast: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/admin/notifications/create-campaign-update', methods=['POST'])
+def create_campaign_update():
+    """Create campaign update notification (admin only)"""
+    try:
+        data = request.get_json()
+        admin_id = data.get('adminID')
+        campaign_id = data.get('campaignID')
+        update_type = data.get('updateType', 'status_change')  # status_change, reminder, achievement
+        details = data.get('details', {})
+        
+        if not admin_id or not campaign_id:
+            return jsonify({'success': False, 'error': 'Admin ID and Campaign ID are required'}), 400
+        
+        # Verify admin and get campaign details
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Verify admin
+        cursor.execute("SELECT role FROM User WHERE userID = %s", (admin_id,))
+        admin = cursor.fetchone()
+        
+        if not admin or admin['role'] != 'admin':
+            cursor.close()
+            connection.close()
+            return jsonify({'success': False, 'error': 'Admin access required'}), 403
+        
+        # Get campaign details
+        cursor.execute("""
+            SELECT e.eventTitle, e.eventCategory, e.status, 
+                   GROUP_CONCAT(DISTINCT p.studentID) as participant_ids
+            FROM Event e
+            LEFT JOIN Participation p ON e.eventID = p.eventID
+            WHERE e.eventID = %s
+            GROUP BY e.eventID
+        """, (campaign_id,))
+        
+        campaign = cursor.fetchone()
+        
+        if not campaign:
+            cursor.close()
+            connection.close()
+            return jsonify({'success': False, 'error': 'Campaign not found'}), 404
+        
+        campaign_title = campaign['eventTitle']
+        
+        # Get participant user IDs
+        participant_user_ids = []
+        if campaign['participant_ids']:
+            # Convert participant student IDs to user IDs
+            student_ids = campaign['participant_ids'].split(',')
+            if student_ids:
+                cursor.execute("""
+                    SELECT s.userID 
+                    FROM Student s 
+                    WHERE s.studentID IN (%s)
+                """ % ','.join(['%s'] * len(student_ids)), tuple(student_ids))
+                
+                participants = cursor.fetchall()
+                participant_user_ids = [p['userID'] for p in participants]
+        
+        cursor.close()
+        connection.close()
+        
+        # Determine notification content based on update type
+        if update_type == 'status_change':
+            title = f"📅 Campaign Update: {campaign_title}"
+            message = f"The campaign '{campaign_title}' status has been updated to '{details.get('newStatus', 'Unknown')}'."
+        elif update_type == 'reminder':
+            title = f"⏰ Reminder: {campaign_title}"
+            message = f"Don't forget about the '{campaign_title}' campaign! {details.get('reminderMessage', '')}"
+        elif update_type == 'achievement':
+            title = f"🏆 Achievement Unlocked: {campaign_title}"
+            message = f"Congratulations! The '{campaign_title}' campaign has reached a milestone: {details.get('achievement', '')}"
+        else:
+            title = f"📢 Campaign Update"
+            message = f"Update for '{campaign_title}': {details.get('message', '')}"
+        
+        # Send to participants
+        successful_count = 0
+        failed_count = 0
+        
+        for user_id in participant_user_ids:
+            success = create_notification(
+                user_id=user_id,
+                notification_type='campaign_update',
+                title=title,
+                message=message,
+                metadata={
+                    'campaignID': campaign_id,
+                    'campaignTitle': campaign_title,
+                    'updateType': update_type,
+                    'details': details,
+                    'fromAdmin': admin_id,
+                    'timestamp': datetime.now().isoformat()
+                }
+            )
+            
+            if success:
+                successful_count += 1
+            else:
+                failed_count += 1
+        
+        # Also notify the admin
+        create_notification(
+            user_id=admin_id,
+            notification_type='admin_alert',
+            title='Campaign Update Sent',
+            message=f'Your campaign update for "{campaign_title}" was sent to {successful_count} participants.',
+            metadata={
+                'campaignID': campaign_id,
+                'sentCount': successful_count
+            }
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': f'Campaign update sent to {successful_count} participants',
+            'stats': {
+                'totalParticipants': len(participant_user_ids),
+                'successful': successful_count,
+                'failed': failed_count
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error creating campaign update: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ============ AUTOMATED NOTIFICATION FUNCTIONS ============
+
+def check_and_send_daily_reminders():
+    """Check and send daily recycle reminders to students"""
+    try:
+        logger.info("🔄 Checking for daily recycle reminders...")
+        
+        connection = get_db_connection()
+        if not connection:
+            return
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Get all students who have recycle reminders enabled
+        cursor.execute("""
+            SELECT 
+                u.userID,
+                u.fullName,
+                uns.recycleReminders,
+                s.totalItemsRecycled,
+                s.streakDays
+            FROM User u
+            JOIN Student s ON u.userID = s.userID
+            LEFT JOIN UserNotificationSettings uns ON u.userID = uns.userID
+            WHERE u.role = 'student' 
+            AND (uns.recycleReminders IS NULL OR uns.recycleReminders = TRUE)
+        """)
+        
+        students = cursor.fetchall()
+        
+        cursor.close()
+        connection.close()
+        
+        sent_count = 0
+        
+        for student in students:
+            # Customize message based on student's activity
+            if student['totalItemsRecycled'] == 0:
+                message = f"Hi {student['fullName']}, start your recycling journey today! Recycle your first item to earn points and help our campus environment. ♻️"
+            elif student['streakDays'] and student['streakDays'] > 0:
+                message = f"Hi {student['fullName']}, keep your {student['streakDays']}-day recycling streak going! Don't break it - recycle today! 🔥"
+            else:
+                message = f"Hi {student['fullName']}, don't forget to recycle today! Every item helps our campus and earns you points. ♻️"
+            
+            success = create_notification(
+                user_id=student['userID'],
+                notification_type='recycle_reminder',
+                title='Daily Recycling Reminder ♻️',
+                message=message,
+                metadata={
+                    'reminderType': 'daily',
+                    'studentName': student['fullName'],
+                    'timestamp': datetime.now().isoformat()
+                },
+                check_preferences=False  # Already filtered by preferences
+            )
+            
+            if success:
+                sent_count += 1
+        
+        logger.info(f"✅ Daily reminders sent to {sent_count} students")
+        return sent_count
+        
+    except Exception as e:
+        logger.error(f"❌ Error sending daily reminders: {e}")
+        return 0
+
+def send_points_update_notification(user_id, points_change, reason, student_name=""):
+    """Send points update notification to a student"""
+    try:
+        if points_change > 0:
+            title = f"🎉 +{points_change} Points Earned!"
+            message = f"Hi {student_name}, you earned {points_change} points for {reason}!"
+        elif points_change < 0:
+            title = f"⚠️ {abs(points_change)} Points Deducted"
+            message = f"Hi {student_name}, {abs(points_change)} points were deducted. Reason: {reason}"
+        else:
+            title = "📊 Points Update"
+            message = f"Hi {student_name}, your points have been updated."
+        
+        success = create_notification(
+            user_id=user_id,
+            notification_type='points_update',
+            title=title,
+            message=message,
+            metadata={
+                'pointsChange': points_change,
+                'reason': reason,
+                'timestamp': datetime.now().isoformat()
+            }
+        )
+        
+        return success
+    except Exception as e:
+        logger.error(f"❌ Error sending points update: {e}")
+        return False
+
+# ============ ADMIN NOTIFICATION CREATION ENDPOINT ============
+
+@app.route('/api/admin/notifications/create', methods=['POST'])
+def create_admin_notification():
+    """Create a new notification for admin users"""
+    try:
+        data = request.get_json()
+        
+        notification_id = data.get('notificationID', f"NOTIF{datetime.now().strftime('%Y%m%d%H%M%S')}")
+        user_id = data.get('userID')
+        type_name = data.get('type', 'system')
+        title = data.get('title', 'New Notification')
+        message = data.get('message', '')
+        metadata = data.get('metadata', {})
+        
+        if not user_id:
+            return jsonify({'success': False, 'error': 'User ID is required'}), 400
+        
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor()
+        
+        # Get typeID from typeName
+        cursor.execute("SELECT typeID FROM NotificationType WHERE typeName = %s", (type_name,))
+        type_result = cursor.fetchone()
+        
+        if not type_result:
+            return jsonify({'success': False, 'error': 'Invalid notification type'}), 400
+        
+        type_id = type_result[0]
+        
+        # Insert notification
+        cursor.execute("""
+            INSERT INTO Notification (notificationID, userID, typeID, title, message, metadata)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (
+            notification_id,
+            user_id,
+            type_id,
+            title,
+            message,
+            json.dumps(metadata) if isinstance(metadata, dict) else metadata
+        ))
+        
+        connection.commit()
+        
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Notification created successfully',
+            'notificationID': notification_id
+        })
+        
+    except Error as e:
+        logger.error(f"Database error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ============ STUDENT DASHBOARD ENDPOINTS ============
+
+@app.route('/api/students/<user_id>/stats', methods=['GET'])
+def get_student_stats(user_id):
+    """Get student statistics for dashboard"""
+    try:
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Get student stats from Student table
+        cursor.execute("""
+            SELECT 
+                s.studentID,
+                s.totalPoints,
+                s.totalMerits,
+                s.totalItemsRecycled,
+                s.totalWeightRecycled,
+                u.fullName,
+                u.username,
+                u.email
+            FROM Student s
+            JOIN User u ON s.userID = u.userID
+            WHERE s.userID = %s
+        """, (user_id,))
+        
+        student_data = cursor.fetchone()
+        
+        if not student_data:
+            cursor.close()
+            connection.close()
+            return jsonify({'success': False, 'error': 'Student not found'}), 404
+        
+        # Calculate rank based on total points
+        cursor.execute("""
+            SELECT 
+                COUNT(*) + 1 as `rank`
+            FROM Student 
+            WHERE totalPoints > %s
+        """, (student_data['totalPoints'],))
+                
+        rank_result = cursor.fetchone()
+        rank = rank_result['rank'] if rank_result else 1
+        
+        # Determine rank name
+        total_points = student_data['totalPoints'] or 0
+        if total_points >= 2000:
+            current_rank = 'Gold'
+            next_rank = 'Platinum'
+            points_to_next = max(0, 3000 - total_points)
+        elif total_points >= 1000:
+            current_rank = 'Silver'
+            next_rank = 'Gold'
+            points_to_next = max(0, 2000 - total_points)
+        else:
+            current_rank = 'Bronze'
+            next_rank = 'Silver'
+            points_to_next = max(0, 1000 - total_points)
+        
+        # Calculate streak (placeholder - based on recent participation)
+        cursor.execute("""
+            SELECT COUNT(DISTINCT DATE(registrationDate)) as streak_days
+            FROM Participation 
+            WHERE studentID = %s 
+            AND registrationDate >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+        """, (student_data['studentID'],))
+        
+        streak_result = cursor.fetchone()
+        streak_days = streak_result['streak_days'] if streak_result else 0
+        
+        # Calculate weekly progress
+        cursor.execute("""
+            SELECT 
+                COUNT(DISTINCT DATE(registrationDate)) as days_active,
+                COALESCE(SUM(rewardPointsEarned), 0) as weekly_points
+            FROM Participation 
+            WHERE studentID = %s 
+            AND registrationDate >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+        """, (student_data['studentID'],))
+        
+        weekly_result = cursor.fetchone()
+        weekly_progress = weekly_result['days_active'] if weekly_result else 0
+        weekly_points = weekly_result['weekly_points'] if weekly_result else 0
+        
+        cursor.close()
+        connection.close()
+        
+        stats = {
+            'totalPoints': student_data['totalPoints'] or 0,
+            'totalMerits': student_data['totalMerits'] or 0,
+            'totalRecycling': student_data['totalItemsRecycled'] or 0,
+            'totalWeight': float(student_data['totalWeightRecycled']) if student_data['totalWeightRecycled'] else 0.0,
+            'rank': rank,
+            'currentRank': current_rank,
+            'nextRank': next_rank,
+            'pointsToNextRank': points_to_next,
+            'streakDays': streak_days,
+            'weeklyGoal': 5,  # Default weekly goal
+            'weeklyProgress': min(weekly_progress, 5),
+            'monthlyPoints': total_points,  # Using total as monthly for now
+            'monthlyGoal': 500,
+            'studentID': student_data['studentID'],
+            'fullName': student_data['fullName'],
+            'username': student_data['username']
+        }
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+        
+    except Error as e:
+        logger.error(f"Database error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/students/<user_id>/weekly-stats', methods=['GET'])
+def get_student_weekly_stats(user_id):
+    """Get student weekly statistics for chart"""
+    try:
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Get student ID first
+        cursor.execute("SELECT studentID FROM Student WHERE userID = %s", (user_id,))
+        student_result = cursor.fetchone()
+        
+        if not student_result:
+            cursor.close()
+            connection.close()
+            return jsonify({'success': False, 'error': 'Student not found'}), 404
+        
+        student_id = student_result['studentID']
+        
+        # Get points per day for the last 7 days
+        cursor.execute("""
+            SELECT 
+                DAYNAME(registrationDate) as day_name,
+                DAYOFWEEK(registrationDate) as day_num,
+                DATE(registrationDate) as date,
+                COALESCE(SUM(rewardPointsEarned), 0) as points
+            FROM Participation 
+            WHERE studentID = %s 
+            AND registrationDate >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            GROUP BY DATE(registrationDate), DAYNAME(registrationDate), DAYOFWEEK(registrationDate)
+            ORDER BY date
+        """, (student_id,))
+        
+        daily_stats = cursor.fetchall()
+        
+        # Create full week data
+        days_of_week = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+        week_data = []
+        
+        # Initialize with zeros
+        for i in range(7):
+            week_data.append({
+                'day': days_of_week[i],
+                'points': 0
+            })
+        
+        # Fill in actual data
+        for stat in daily_stats:
+            day_index = (stat['day_num'] - 1) % 7  # MySQL returns 1=Sunday, 2=Monday, etc.
+            week_data[day_index]['points'] = stat['points']
+        
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'data': week_data
+        })
+        
+    except Error as e:
+        logger.error(f"Database error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/students/<user_id>/category-stats', methods=['GET'])
+def get_student_category_stats(user_id):
+    """Get student recycling category distribution"""
+    try:
+        # For now, return mock data since we don't have category tracking in Participation
+        # In a real system, you would track categories in the recycling records
+        
+        category_data = [
+            {
+                'name': 'Plastic',
+                'amount': 15,
+                'color': '#4CAF50',
+                'legendFontColor': '#7F7F7F',
+                'legendFontSize': 12
+            },
+            {
+                'name': 'Paper',
+                'amount': 20,
+                'color': '#2196F3',
+                'legendFontColor': '#7F7F7F',
+                'legendFontSize': 12
+            },
+            {
+                'name': 'Glass',
+                'amount': 8,
+                'color': '#FF9800',
+                'legendFontColor': '#7F7F7F',
+                'legendFontSize': 12
+            },
+            {
+                'name': 'Metal',
+                'amount': 12,
+                'color': '#F44336',
+                'legendFontColor': '#7F7F7F',
+                'legendFontSize': 12
+            }
+        ]
+        
+        return jsonify({
+            'success': True,
+            'data': category_data
+        })
+        
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/students/leaderboard/top-10', methods=['GET'])
+def get_student_leaderboard():
+    """Get top 10 students for leaderboard - UPDATED"""
+    try:
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT 
+                ROW_NUMBER() OVER (ORDER BY s.totalPoints DESC) as `rank`,
+                s.studentID,
+                u.fullName,
+                u.username,
+                s.totalPoints as points,
+                s.totalMerits,
+                s.totalItemsRecycled,
+                s.totalWeightRecycled
+            FROM Student s
+            JOIN User u ON s.userID = u.userID
+            WHERE u.role = 'student'
+            ORDER BY s.totalPoints DESC
+            LIMIT 10
+        """)
+        
+        leaderboard = cursor.fetchall()
+        
+        cursor.close()
+        connection.close()
+        
+        if not leaderboard:
+            # If no data, return fallback
+            leaderboard = [
+                {'rank': 1, 'studentID': 'A23CS0001', 'fullName': 'John Doe', 'points': 180},
+                {'rank': 2, 'studentID': 'A23CS0002', 'fullName': 'Jane Smith', 'points': 175},
+                {'rank': 3, 'studentID': 'A23CS0003', 'fullName': 'Ali Ahmad', 'points': 125},
+                {'rank': 4, 'studentID': 'A23CS0004', 'fullName': 'Siti Fatimah', 'points': 100},
+                {'rank': 5, 'studentID': 'A23CS0005', 'fullName': 'Michael Tan', 'points': 105},
+                {'rank': 6, 'studentID': 'A23CS0006', 'fullName': 'Sophia Lee', 'points': 25}
+            ]
+        
+        return jsonify({
+            'success': True,
+            'leaderboard': leaderboard
+        })
+        
+    except Exception as e:
+        print(f"Error in get_student_leaderboard: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    
+def get_fallback_leaderboard():
+    """Fallback leaderboard data"""
+    return [
+        {'rank': 1, 'studentID': 'A23CS0001', 'name': 'John Doe', 'points': 180},
+        {'rank': 2, 'studentID': 'A23CS0002', 'name': 'Jane Smith', 'points': 175},
+        {'rank': 3, 'studentID': 'A23CS0003', 'name': 'Ali Ahmad', 'points': 125},
+        {'rank': 4, 'studentID': 'A23CS0004', 'name': 'Siti Fatimah', 'points': 100},
+        {'rank': 5, 'studentID': 'A23CS0005', 'name': 'Michael Tan', 'points': 105},
+        {'rank': 6, 'studentID': 'A23CS0006', 'name': 'Sophia Lee', 'points': 25}
+    ]
+
+@app.route('/api/students/<user_id>/activities', methods=['GET'])
+def get_student_activities(user_id):
+    """Get student recent activities"""
+    try:
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Get student ID from userID
+        cursor.execute("SELECT studentID FROM Student WHERE userID = %s", (user_id,))
+        student_result = cursor.fetchone()
+        
+        if not student_result:
+            cursor.close()
+            connection.close()
+            return jsonify({'success': False, 'error': 'Student not found'}), 404
+        
+        student_id = student_result['studentID']
+        
+        # Get recent participation activities
+        cursor.execute("""
+            SELECT 
+                p.participationID as id,
+                'event' as type,
+                e.eventTitle as event_title,
+                e.eventCategory as category,
+                p.rewardPointsEarned as points,
+                p.registrationDate as timestamp,
+                p.participationStatus as status,
+                CONCAT('Participated in ', e.eventTitle) as description
+            FROM Participation p
+            JOIN Event e ON p.eventID = e.eventID
+            WHERE p.studentID = %s
+            ORDER BY p.registrationDate DESC
+            LIMIT 5
+        """, (student_id,))
+        
+        activities = cursor.fetchall()
+        
+        cursor.close()
+        connection.close()
+        
+        # Format activities
+        formatted_activities = []
+        for activity in activities:
+            formatted_activities.append({
+                'id': activity['id'],
+                'type': activity['type'],
+                'description': activity['description'],
+                'points': activity['points'],
+                'timestamp': activity['timestamp'].isoformat() if activity['timestamp'] else None,
+                'formattedDate': activity['timestamp'].strftime('%b %d, %Y') if activity['timestamp'] else 'Recently',
+                'status': activity['status'],
+                'eventTitle': activity['event_title'],
+                'category': activity['category']
+            })
+        
+        return jsonify({
+            'success': True,
+            'activities': formatted_activities
+        })
+        
+    except Exception as e:
+        print(f"Error in get_student_activities: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+def get_fallback_activities():
+    """Fallback activities with REAL dates"""
+    return [
+        {
+            'id': 1,
+            'type': 'event',
+            'description': 'Participated in Earth Day Recycling Drive 2025',
+            'points': 50,
+            'timestamp': '2025-04-24T10:30:00',
+            'formattedDate': 'Apr 24, 2025'
+        },
+        {
+            'id': 2,
+            'type': 'event',
+            'description': 'Participated in Plastic-Free Campus Campaign',
+            'points': 100,
+            'timestamp': '2025-03-15T14:20:00',
+            'formattedDate': 'Mar 15, 2025'
+        },
+        {
+            'id': 3,
+            'type': 'event',
+            'description': 'Participated in E-Waste Collection Week',
+            'points': 75,
+            'timestamp': '2025-05-22T09:45:00',
+            'formattedDate': 'May 22, 2025'
+        }
+    ]
+
+# ============ STUDENT RECYCLING ENDPOINTS ============
+
+@app.route('/api/students/recycle', methods=['POST'])
+def record_recycling():
+    """Record student recycling activity"""
+    try:
+        data = request.get_json()
+        user_id = data.get('userID')
+        category = data.get('category')
+        weight = data.get('weight', 0)
+        items = data.get('items', 1)
+        points = data.get('points', 0)
+        
+        if not user_id or not category:
+            return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+        
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor()
+        
+        # Get student ID
+        cursor.execute("SELECT studentID FROM Student WHERE userID = %s", (user_id,))
+        student_result = cursor.fetchone()
+        
+        if not student_result:
+            cursor.close()
+            connection.close()
+            return jsonify({'success': False, 'error': 'Student not found'}), 404
+        
+        student_id = student_result[0]
+        
+        # Update student stats
+        cursor.execute("""
+            UPDATE Student 
+            SET 
+                totalPoints = totalPoints + %s,
+                totalItemsRecycled = totalItemsRecycled + %s,
+                totalWeightRecycled = totalWeightRecycled + %s
+            WHERE studentID = %s
+        """, (points, items, weight, student_id))
+        
+        # Create recycling record (you might want to create a RecyclingRecords table)
+        # For now, we'll just update the student stats
+        
+        connection.commit()
+        
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Recycling recorded! Earned {points} points',
+            'pointsEarned': points
+        })
+        
+    except Error as e:
+        logger.error(f"Database error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ============ STUDENT EVENT REGISTRATION ============
+
+@app.route('/api/students/register-event', methods=['POST'])
+def register_for_event():
+    """Register student for an event"""
+    try:
+        data = request.get_json()
+        user_id = data.get('userID')
+        event_id = data.get('eventID')
+        
+        if not user_id or not event_id:
+            return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+        
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Get student ID
+        cursor.execute("SELECT studentID FROM Student WHERE userID = %s", (user_id,))
+        student_result = cursor.fetchone()
+        
+        if not student_result:
+            cursor.close()
+            connection.close()
+            return jsonify({'success': False, 'error': 'Student not found'}), 404
+        
+        student_id = student_result['studentID']
+        
+        # Check if already registered
+        cursor.execute("""
+            SELECT participationID 
+            FROM Participation 
+            WHERE studentID = %s AND eventID = %s
+        """, (student_id, event_id))
+        
+        if cursor.fetchone():
+            cursor.close()
+            connection.close()
+            return jsonify({'success': False, 'error': 'Already registered for this event'}), 400
+        
+        # Register for event
+        cursor.execute("""
+            INSERT INTO Participation (studentID, eventID, participationStatus)
+            VALUES (%s, %s, 'Registered')
+        """, (student_id, event_id))
+        
+        connection.commit()
+        
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Successfully registered for event'
+        })
+        
+    except Error as e:
+        logger.error(f"Database error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============ AUTOMATED NOTIFICATION FUNCTIONS ============
+
+def check_and_send_daily_reminders():
+    """Check and send daily recycle reminders to students"""
+    try:
+        logger.info("🔄 Checking for daily recycle reminders...")
+        
+        connection = get_db_connection()
+        if not connection:
+            return
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Get all students who have recycle reminders enabled
+        cursor.execute("""
+            SELECT 
+                u.userID,
+                u.fullName,
+                uns.recycleReminders,
+                s.totalItemsRecycled,
+                s.streakDays
+            FROM User u
+            JOIN Student s ON u.userID = s.userID
+            LEFT JOIN UserNotificationSettings uns ON u.userID = uns.userID
+            WHERE u.role = 'student' 
+            AND (uns.recycleReminders IS NULL OR uns.recycleReminders = TRUE)
+        """)
+        
+        students = cursor.fetchall()
+        
+        cursor.close()
+        connection.close()
+        
+        sent_count = 0
+        
+        for student in students:
+            # Customize message based on student's activity
+            if student['totalItemsRecycled'] == 0:
+                message = f"Hi {student['fullName']}, start your recycling journey today! Recycle your first item to earn points and help our campus environment. ♻️"
+            elif student['streakDays'] and student['streakDays'] > 0:
+                message = f"Hi {student['fullName']}, keep your {student['streakDays']}-day recycling streak going! Don't break it - recycle today! 🔥"
+            else:
+                message = f"Hi {student['fullName']}, don't forget to recycle today! Every item helps our campus and earns you points. ♻️"
+            
+            success = create_notification(
+                user_id=student['userID'],
+                notification_type='recycle_reminder',
+                title='Daily Recycling Reminder ♻️',
+                message=message,
+                metadata={
+                    'reminderType': 'daily',
+                    'studentName': student['fullName'],
+                    'timestamp': datetime.now().isoformat()
+                },
+                check_preferences=False  # Already filtered by preferences
+            )
+            
+            if success:
+                sent_count += 1
+        
+        logger.info(f"✅ Daily reminders sent to {sent_count} students")
+        return sent_count
+        
+    except Exception as e:
+        logger.error(f"❌ Error sending daily reminders: {e}")
+        return 0
+
+def check_and_send_weekly_summaries():
+    """Send weekly recycling summaries to students"""
+    try:
+        logger.info("📊 Checking for weekly summaries...")
+        
+        connection = get_db_connection()
+        if not connection:
+            return
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Get students who want weekly summaries (pointUpdates = TRUE)
+        cursor.execute("""
+            SELECT 
+                u.userID,
+                u.fullName,
+                uns.pointUpdates,
+                s.totalPoints,
+                s.totalItemsRecycled,
+                s.streakDays
+            FROM User u
+            JOIN Student s ON u.userID = s.userID
+            LEFT JOIN UserNotificationSettings uns ON u.userID = uns.userID
+            WHERE u.role = 'student' 
+            AND (uns.pointUpdates IS NULL OR uns.pointUpdates = TRUE)
+        """)
+        
+        students = cursor.fetchall()
+        
+        cursor.close()
+        connection.close()
+        
+        sent_count = 0
+        today = datetime.now()
+        
+        # Only send on Sundays (start of week)
+        if today.weekday() == 6:  # Sunday
+            for student in students:
+                success = create_notification(
+                    user_id=student['userID'],
+                    notification_type='points_update',
+                    title='📈 Weekly Recycling Summary',
+                    message=f"Hi {student['fullName']}, here's your weekly update:\n"
+                           f"• Total Points: {student['totalPoints']}\n"
+                           f"• Items Recycled: {student['totalItemsRecycled']}\n"
+                           f"• Current Streak: {student['streakDays']} days\n"
+                           f"Keep up the great work! ♻️",
+                    metadata={
+                        'summaryType': 'weekly',
+                        'studentName': student['fullName'],
+                        'timestamp': today.isoformat()
+                    },
+                    check_preferences=False
+                )
+                
+                if success:
+                    sent_count += 1
+            
+            logger.info(f"✅ Weekly summaries sent to {sent_count} students")
+        else:
+            logger.info("⏸️ Not Sunday, skipping weekly summaries")
+        
+        return sent_count
+        
+    except Exception as e:
+        logger.error(f"❌ Error sending weekly summaries: {e}")
+        return 0
+
+def check_and_send_monthly_promotions():
+    """Send monthly promotional offers to students who opted in"""
+    try:
+        logger.info("🎁 Checking for monthly promotions...")
+        
+        connection = get_db_connection()
+        if not connection:
+            return
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Get students who want promotional offers
+        cursor.execute("""
+            SELECT 
+                u.userID,
+                u.fullName,
+                uns.promotionalOffers,
+                s.totalPoints
+            FROM User u
+            JOIN Student s ON u.userID = s.userID
+            LEFT JOIN UserNotificationSettings uns ON u.userID = uns.userID
+            WHERE u.role = 'student' 
+            AND uns.promotionalOffers = TRUE
+        """)
+        
+        students = cursor.fetchall()
+        
+        cursor.close()
+        connection.close()
+        
+        sent_count = 0
+        today = datetime.now()
+        
+        # Only send on 1st day of month
+        if today.day == 1:
+            for student in students:
+                # Customize offers based on points
+                if student['totalPoints'] >= 1000:
+                    offer = "Platinum Tier: 20% bonus on next recycling!"
+                elif student['totalPoints'] >= 500:
+                    offer = "Gold Tier: 15% bonus on next recycling!"
+                else:
+                    offer = "Special Offer: 10% bonus on next recycling!"
+                
+                success = create_notification(
+                    user_id=student['userID'],
+                    notification_type='promotional',
+                    title='🎁 Monthly Special Offer!',
+                    message=f"Hi {student['fullName']},\n\n"
+                           f"As a valued UTM ReMerit member, you get:\n"
+                           f"• {offer}\n"
+                           f"• Current Points: {student['totalPoints']}\n\n"
+                           f"Visit the EcoCenter today to claim your bonus!",
+                    metadata={
+                        'promotionType': 'monthly',
+                        'offer': offer,
+                        'studentName': student['fullName'],
+                        'timestamp': today.isoformat()
+                    },
+                    check_preferences=False
+                )
+                
+                if success:
+                    sent_count += 1
+            
+            logger.info(f"✅ Monthly promotions sent to {sent_count} students")
+        else:
+            logger.info("⏸️ Not 1st of month, skipping promotions")
+        
+        return sent_count
+        
+    except Exception as e:
+        logger.error(f"❌ Error sending monthly promotions: {e}")
+        return 0
+
+def start_scheduled_tasks():
+    """Start scheduled notification tasks"""
+    global scheduler
+
+    try:
+        scheduler = BackgroundScheduler()
+        
+        # Schedule daily recycle reminders at 9 AM
+        scheduler.add_job(
+            func=check_and_send_daily_reminders,
+            trigger='cron',
+            hour=9,
+            minute=0,
+            id='daily_recycle_reminders',
+            name='Send daily recycle reminders',
+            replace_existing=True
+        )
+        
+        # Schedule weekly summaries every Sunday at 8 PM
+        scheduler.add_job(
+            func=check_and_send_weekly_summaries,
+            trigger='cron',
+            day_of_week='sun',
+            hour=20,
+            minute=0,
+            id='weekly_summaries',
+            name='Send weekly summaries',
+            replace_existing=True
+        )
+        
+        # Schedule monthly promotions on 1st day of month at 10 AM
+        scheduler.add_job(
+            func=check_and_send_monthly_promotions,
+            trigger='cron',
+            day=1,
+            hour=10,
+            minute=0,
+            id='monthly_promotions',
+            name='Send monthly promotions',
+            replace_existing=True
+        )
+        
+        scheduler.start()
+        logger.info("✅ Scheduled tasks started")
+        return scheduler
+    except Exception as e:
+        logger.error(f"❌ Failed to start scheduled tasks: {e}")
+        return None
+        
+def send_points_update_notification(user_id, points_change, reason, student_name=""):
+    """Send points update notification to a student"""
+    try:
+        if points_change > 0:
+            title = f"🎉 +{points_change} Points Earned!"
+            message = f"Hi {student_name}, you earned {points_change} points for {reason}!"
+        elif points_change < 0:
+            title = f"⚠️ {abs(points_change)} Points Deducted"
+            message = f"Hi {student_name}, {abs(points_change)} points were deducted. Reason: {reason}"
+        else:
+            title = "📊 Points Update"
+            message = f"Hi {student_name}, your points have been updated."
+        
+        success = create_notification(
+            user_id=user_id,
+            notification_type='points_update',
+            title=title,
+            message=message,
+            metadata={
+                'pointsChange': points_change,
+                'reason': reason,
+                'timestamp': datetime.now().isoformat()
+            }
+        )
+        
+        return success
+    except Exception as e:
+        logger.error(f"❌ Error sending points update: {e}")
+        return False
+
 
 # ============ DATABASE HEALTH CHECK ============
 
@@ -615,14 +2667,14 @@ def get_server_info():
         'server': {
             'name': 'UTM ReMerit Server',
             'local_ip': local_ip,
-            'port': 5000,
+            'port': 3000,
             'os': platform.system(),
             'mode': 'real_model' if interpreter is not None else 'mock_detection'
         },
         'connection_methods': {
-            'usb_debugging': 'Use: http://localhost:5000',
-            'wifi_network': f'Use: http://{local_ip}:5000',
-            'android_emulator': 'Use: http://10.0.2.2:5000'
+            'usb_debugging': 'Use: http://localhost:3000',
+            'wifi_network': f'Use: http://{local_ip}:3000',
+            'android_emulator': 'Use: http://10.0.2.2:3000'
         },
         'database': {
             'connected': get_db_connection() is not None,
@@ -732,8 +2784,8 @@ def health():
         'server_name': 'UTM ReMerit Server',
         'mode': 'real_model' if interpreter is not None else 'mock_detection',
         'connections': {
-            'local': 'http://localhost:5000',
-            'network': f'http://{local_ip}:5000',
+            'local': 'http://localhost:3000',
+            'network': f'http://{local_ip}:3000',
             'database': 'Connected' if get_db_connection() else 'Disconnected'
         }
     })
@@ -886,6 +2938,597 @@ def model_info():
         'output_count': len(output_details),
         'classes': CLASS_NAMES
     })
+
+@app.route('/api/scanner/save-scan', methods=['POST'])
+def save_scan_to_database():
+    """Save scanner data to database - FIXED VERSION with proper connection handling"""
+    connection = None
+    cursor = None
+    
+    try:
+        data = request.get_json()
+        logger.info("📤 Received scanner data for saving to database")
+        
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        # Extract data
+        scan_data = data.get('scan', {})
+        items_data = data.get('items', [])
+        uploaded_image = data.get('uploadedImage')
+        
+        # Validate required fields
+        if not scan_data.get('userID'):
+            logger.error("❌ Missing userID in scan data")
+            return jsonify({'success': False, 'error': 'userID is required'}), 400
+        
+        user_id = scan_data['userID']
+        
+        # Debug log
+        logger.info(f"💾 Saving scan for user: {user_id}")
+        logger.info(f"📊 Scan data: {scan_data}")
+        logger.info(f"📦 Items count: {len(items_data)}")
+        
+        # Get database connection
+        try:
+            connection = get_db_connection()
+            if not connection:
+                logger.error("❌ Database connection failed")
+                return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+        except Exception as conn_error:
+            logger.error(f"❌ Failed to get database connection: {conn_error}")
+            return jsonify({'success': False, 'error': 'Database connection error'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Start transaction
+        connection.start_transaction()
+        
+        try:
+            # 1. First, verify the user exists
+            cursor.execute("SELECT userID FROM User WHERE userID = %s", (user_id,))
+            user = cursor.fetchone()
+            
+            if not user:
+                logger.error(f"❌ User not found: {user_id}")
+                raise Exception(f"User {user_id} not found in database")
+            
+            # 2. Insert into Scan table
+            scan_query = """
+                INSERT INTO Scan (
+                    userID, totalItems, totalWeight, totalPoints, 
+                    scanMethod, uploadStatus, notes, scanAt
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
+            """
+            
+            cursor.execute(scan_query, (
+                user_id,
+                safe_int(scan_data.get('totalItems', 0)),
+                safe_float(scan_data.get('totalWeight', 0)),
+                safe_int(scan_data.get('totalPoints', 0)),
+                scan_data.get('scanMethod', 'ai'),
+                scan_data.get('uploadStatus', 'saved'),
+                scan_data.get('notes', 'Recyclable items scan')
+            ))
+            
+            scan_id = cursor.lastrowid
+            logger.info(f"✅ Scan inserted. Scan ID: {scan_id}")
+            
+            # 3. Get material IDs for each item type
+            material_ids = {}
+            try:
+                cursor.execute("SELECT materialID, materialClass FROM MaterialType")
+                materials = cursor.fetchall()
+                for material in materials:
+                    material_ids[material['materialClass'].lower()] = material['materialID']
+            except Exception as mat_error:
+                logger.warning(f"⚠️ Error fetching material types: {mat_error}")
+                # Use default mapping as fallback
+                material_ids = {
+                    'plastic': 1, 'glass': 2, 'metal': 3, 
+                    'paper': 4, 'non-recyclable': 5, 'tyre': 6
+                }
+            
+            logger.info(f"📋 Material IDs: {material_ids}")
+            
+            # 4. Insert recycling transactions
+            items_inserted = 0
+            for item in items_data:
+                material_type = item.get('materialType', '').lower()
+                
+                # Map to allowed material types (plastic, paper, glass, metal)
+                allowed_materials = ['plastic', 'paper', 'glass', 'metal']
+                if material_type not in allowed_materials:
+                    # Map other materials to allowed types
+                    if material_type in ['tyre', 'non-recyclable']:
+                        material_type = 'plastic'  # Default to plastic for non-standard items
+                    else:
+                        material_type = 'plastic'  # Default fallback
+                
+                transaction_query = """
+                    INSERT INTO recycling_transactions (
+                        user_id, material_type, quantity, points_earned,
+                        weight, scan_id, transaction_date, status,
+                        scan_method, recyclable, confidence, manual_entry,
+                        ai_detected, corrected, created_at
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                """
+                
+                cursor.execute(transaction_query, (
+                    user_id,
+                    material_type,
+                    safe_float(item.get('quantity', 0)),
+                    safe_int(item.get('pointsEarned', 0)),
+                    safe_float(item.get('weight', 0)),
+                    scan_id,
+                    datetime.now().date(),  # Use current date
+                    item.get('status', 'finalized').lower(),
+                    scan_data.get('scanMethod', 'ai'),
+                    bool(item.get('recyclabilityStatus', True)),
+                    safe_float(item.get('confidence', 1.0)),
+                    bool(item.get('manual', False)),
+                    bool(item.get('aiDetected', True)),
+                    bool(item.get('corrected', False))
+                ))
+                items_inserted += 1
+            
+            # 5. Insert uploaded image if available
+            image_id = None
+            if uploaded_image:
+                try:
+                    image_query = """
+                        INSERT INTO UploadedImage (
+                            scanID, userID, imagePath, imageType,
+                            annotationStatus, aiConfidence, aiDetectedClasses
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    """
+                    
+                    ai_detected_classes = uploaded_image.get('aiDetectedClasses', [])
+                    if not isinstance(ai_detected_classes, str):
+                        ai_detected_classes = json.dumps(ai_detected_classes)
+                    
+                    cursor.execute(image_query, (
+                        scan_id,
+                        user_id,
+                        uploaded_image.get('imagePath', ''),
+                        uploaded_image.get('imageType', 'scan'),
+                        bool(uploaded_image.get('annotationStatus', False)),
+                        safe_float(uploaded_image.get('aiConfidence', 0)),
+                        ai_detected_classes
+                    ))
+                    image_id = cursor.lastrowid
+                    logger.info(f"🖼️ Image inserted. Image ID: {image_id}")
+                except Exception as img_error:
+                    logger.warning(f"⚠️ Error saving image: {img_error}")
+                    # Continue without image - don't fail the whole transaction
+            
+            # 6. Update Student table if the user is a student
+            try:
+                cursor.execute("""
+                    SELECT s.studentID, s.totalPoints, s.totalItemsRecycled, s.totalWeightRecycled
+                    FROM Student s
+                    JOIN User u ON s.userID = u.userID
+                    WHERE u.userID = %s
+                """, (user_id,))
+                
+                student = cursor.fetchone()
+                
+                if student:
+                    logger.info(f"🎓 Updating student stats for {student['studentID']}")
+                    update_student_query = """
+                        UPDATE Student 
+                        SET 
+                            totalPoints = totalPoints + %s,
+                            totalItemsRecycled = totalItemsRecycled + %s,
+                            totalWeightRecycled = totalWeightRecycled + %s
+                        WHERE studentID = %s
+                    """
+                    
+                    cursor.execute(update_student_query, (
+                        safe_int(scan_data.get('totalPoints', 0)),
+                        safe_int(scan_data.get('totalItems', 0)),
+                        safe_float(scan_data.get('totalWeight', 0)),
+                        student['studentID']
+                    ))
+                    logger.info(f"✅ Student stats updated: +{scan_data.get('totalPoints', 0)} points")
+            
+            except Exception as student_error:
+                logger.warning(f"⚠️ Error updating student stats: {student_error}")
+                # Continue anyway - student stats update is optional
+            
+           
+            # 7. Create audit log
+            try:
+                audit_query = """
+                    INSERT INTO ScanAudit (
+                        scanID, userID, actionType, actionDetails, performedBy
+                    ) VALUES (%s, %s, %s, %s, %s)
+                """
+                
+                action_details = {
+                    'scanID': scan_id,
+                    'totalItems': safe_int(scan_data.get('totalItems', 0)),
+                    'totalWeight': safe_float(scan_data.get('totalWeight', 0)),
+                    'totalPoints': safe_int(scan_data.get('totalPoints', 0)),
+                    'itemsCount': len(items_data),
+                    'hasImage': uploaded_image is not None
+                }
+                
+                cursor.execute(audit_query, (
+                    scan_id,
+                    user_id,
+                    'create',
+                    json.dumps(action_details),
+                    user_id
+                ))
+            except Exception as audit_error:
+                logger.warning(f"⚠️ Error creating audit log: {audit_error}")
+                # Continue anyway - audit log is optional
+            
+            # Commit transaction
+            connection.commit()
+            
+            logger.info(f"✅ Transaction committed successfully")
+            
+            # Prepare response data
+            response_data = {
+                'success': True,
+                'scanID': scan_id,
+                'totalItems': safe_int(scan_data.get('totalItems', 0)),
+                'totalWeight': safe_float(scan_data.get('totalWeight', 0)),
+                'totalPoints': safe_int(scan_data.get('totalPoints', 0)),
+                'itemsCount': items_inserted,
+                'imageID': image_id,
+                'message': 'Scan data saved successfully to database'
+            }
+            
+            logger.info(f"✅ Scan saved successfully! Response: {response_data}")
+            
+            return jsonify(response_data)
+            
+        except Exception as e:
+            # Rollback transaction on error
+            if connection and connection.is_connected():
+                connection.rollback()
+                logger.error(f"❌ Transaction rolled back due to error: {e}")
+            else:
+                logger.error(f"❌ Cannot rollback - connection not available: {e}")
+            
+            logger.error(f"Error traceback: {traceback.format_exc()}")
+            return jsonify({'success': False, 'error': f'Transaction failed: {str(e)}'}), 500
+            
+    except Exception as e:
+        logger.error(f"❌ Unexpected error in save_scan_to_database: {e}")
+        logger.error(f"Error traceback: {traceback.format_exc()}")
+        return jsonify({'success': False, 'error': f'Unexpected error: {str(e)}'}), 500
+        
+    finally:
+        # Safely close cursor and connection
+        try:
+            if cursor:
+                cursor.close()
+                logger.debug("✅ Cursor closed")
+        except Exception as cursor_error:
+            logger.warning(f"⚠️ Error closing cursor: {cursor_error}")
+        
+        try:
+            if connection and connection.is_connected():
+                connection.close()
+                logger.debug("✅ Connection closed")
+        except Exception as conn_error:
+            logger.warning(f"⚠️ Error closing connection: {conn_error}")
+
+# ============ NEW ENDPOINT FOR SMART SCANNER ============
+
+@app.route('/api/save-recycling-transaction', methods=['POST'])
+def save_recycling_transaction():
+    """Save recycling data from smart scanner to recycling_transactions table - MATCHING YOUR TABLE STRUCTURE"""
+    connection = None
+    cursor = None
+    
+    try:
+        data = request.get_json()
+        logger.info("📤 Received recycling transaction data")
+        
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        # Extract data
+        user_id = data.get('userID')
+        items = data.get('items', [])
+        scan_data = data.get('scanData', {})
+        
+        # Validate required fields
+        if not user_id:
+            logger.error("❌ Missing userID")
+            return jsonify({'success': False, 'error': 'userID is required'}), 400
+        
+        if not items:
+            logger.error("❌ No items provided")
+            return jsonify({'success': False, 'error': 'At least one item is required'}), 400
+        
+        logger.info(f"💾 Saving {len(items)} items for user: {user_id}")
+        
+        # Get database connection
+        try:
+            connection = get_db_connection()
+            if not connection:
+                logger.error("❌ Database connection failed")
+                return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+        except Exception as conn_error:
+            logger.error(f"❌ Failed to get database connection: {conn_error}")
+            return jsonify({'success': False, 'error': 'Database connection error'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Start transaction
+        connection.start_transaction()
+        
+        try:
+            # 1. First, verify the user exists
+            cursor.execute("SELECT userID, role FROM User WHERE userID = %s", (user_id,))
+            user = cursor.fetchone()
+            
+            if not user:
+                logger.error(f"❌ User not found: {user_id}")
+                raise Exception(f"User {user_id} not found in database")
+            
+            logger.info(f"✅ User verified: {user['userID']} ({user['role']})")
+            
+            items_inserted = 0
+            total_points = 0
+            total_weight = 0
+            total_quantity = 0
+            
+            # 2. Insert each item into recycling_transactions table
+            for item in items:
+                # Validate required fields
+                required_fields = ['material_type', 'quantity', 'points_earned']
+                for field in required_fields:
+                    if field not in item:
+                        logger.error(f"❌ Missing required field: {field}")
+                        raise Exception(f"Missing required field: {field}")
+                
+                # Ensure material_type is lowercase (matches ENUM)
+                material_type = item['material_type'].lower()
+                
+                # Map to allowed material types
+                allowed_materials = ['plastic', 'paper', 'glass', 'metal']
+                if material_type not in allowed_materials:
+                    logger.warning(f"⚠️ Material type '{material_type}' not in allowed list. Defaulting to 'plastic'")
+                    material_type = 'plastic'  # Default fallback
+                
+                # Insert into recycling_transactions table
+                transaction_query = """
+                    INSERT INTO recycling_transactions (
+                        userID, material_type, quantity, points_earned,
+                        weight, transaction_date, status,
+                        scan_method, recyclable, confidence, manual_entry,
+                        ai_detected, corrected, created_at
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                """
+                
+                cursor.execute(transaction_query, (
+                    user_id,
+                    material_type,
+                    safe_float(item.get('quantity', 0)),
+                    safe_int(item.get('points_earned', 0)),
+                    safe_float(item.get('weight', 0)),
+                    item.get('transaction_date', datetime.now().date()),
+                    item.get('status', 'finalized'),
+                    item.get('scan_method', scan_data.get('scanMethod', 'ai')),
+                    bool(item.get('recyclable', True)),
+                    safe_float(item.get('confidence', 1.0)),
+                    bool(item.get('manual_entry', False)),
+                    bool(item.get('ai_detected', True)),
+                    bool(item.get('corrected', False))
+                ))
+                
+                items_inserted += 1
+                total_points += safe_int(item.get('points_earned', 0))
+                total_weight += safe_float(item.get('weight', 0))
+                total_quantity += safe_float(item.get('quantity', 0))
+                
+                logger.info(f"✅ Inserted: {material_type} - {item.get('quantity')} units - {item.get('points_earned')} points")
+            
+            # 3. Update Student table if the user is a student
+            if user['role'] == 'student':
+                try:
+                    logger.info("🎓 Updating student stats...")
+                    
+                    # FIRST: Get the student's studentID using userID
+                    cursor.execute("""
+                        SELECT studentID, totalPoints, totalItemsRecycled, totalWeightRecycled, totalMerits
+                        FROM Student 
+                        WHERE userID = %s
+                    """, (user_id,))
+                    
+                    student = cursor.fetchone()
+                    
+                    if not student:
+                        logger.error(f"❌ No student record found for userID: {user_id}")
+                        
+                        # Try to get user info to create student record if missing
+                        cursor.execute("""
+                            SELECT fullName, utmID, email 
+                            FROM User 
+                            WHERE userID = %s
+                        """, (user_id,))
+                        
+                        user_info = cursor.fetchone()
+                        
+                        if user_info:
+                            # Create student ID from UTM ID (or generate one)
+                            student_id = user_info['utmID']
+                            
+                            logger.info(f"🔄 Creating missing student record: {student_id}")
+                            
+                            # Insert new student record with default values
+                            insert_student_query = """
+                                INSERT INTO Student (
+                                    studentID, userID, totalPoints, totalMerits,
+                                    totalItemsRecycled, totalWeightRecycled, faculty, yearOfStudy
+                                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                            """
+                            
+                            cursor.execute(insert_student_query, (
+                                student_id,      # studentID
+                                user_id,         # userID
+                                0,               # totalPoints
+                                0,               # totalMerits
+                                0,               # totalItemsRecycled
+                                0.0,             # totalWeightRecycled
+                                'FSSH',          # faculty (default)
+                                1                # yearOfStudy (default)
+                            ))
+                            
+                            logger.info(f"✅ Created new student record with ID: {student_id}")
+                            
+                            # Re-fetch the newly created student
+                            cursor.execute("SELECT studentID FROM Student WHERE userID = %s", (user_id,))
+                            student = cursor.fetchone()
+                        else:
+                            raise Exception(f"User {user_id} not found - cannot create student record")
+                    
+                    student_id = student['studentID']
+                    logger.info(f"✅ Found student: {student_id} for user: {user_id}")
+                    
+                    # Calculate merits (you can adjust this logic)
+                    # In your database, merits might be different from points
+                    merits_to_add = total_points  # Or use a different calculation if needed
+                    
+                    # Update Student table using studentID as primary key
+                    update_student_query = """
+                        UPDATE Student 
+                        SET 
+                            totalPoints = totalPoints + %s,
+                            totalItemsRecycled = totalItemsRecycled + %s,
+                            totalWeightRecycled = totalWeightRecycled + %s,
+                            totalMerits = totalMerits + %s
+                        WHERE studentID = %s
+                    """
+                    
+                    update_values = (
+                        total_points,           # Points to add
+                        round(total_quantity),  # Items to add (rounded to nearest integer)
+                        total_weight,           # Weight to add
+                        merits_to_add,          # Merits to add
+                        student_id              # WHERE clause uses studentID
+                    )
+                    
+                    cursor.execute(update_student_query, update_values)
+                    rows_affected = cursor.rowcount
+                    
+                    if rows_affected > 0:
+                        logger.info(f"✅ Student {student_id} updated: +{total_points} points, +{round(total_quantity)} items")
+                        
+                        # Get and log the updated totals
+                        cursor.execute("""
+                            SELECT totalPoints, totalItemsRecycled, totalWeightRecycled, totalMerits
+                            FROM Student 
+                            WHERE studentID = %s
+                        """, (student_id,))
+                        
+                        updated_student = cursor.fetchone()
+                        if updated_student:
+                            logger.info(f"📈 New totals - Points: {updated_student['totalPoints']}, "
+                                    f"Items: {updated_student['totalItemsRecycled']}, "
+                                    f"Weight: {updated_student['totalWeightRecycled']}, "
+                                    f"Merits: {updated_student['totalMerits']}")
+                    else:
+                        logger.error(f"❌ Student update failed for studentID: {student_id}")
+                        raise Exception(f"Failed to update student {student_id}")
+                    
+                except Exception as student_error:
+                    logger.error(f"❌ Error updating student stats: {student_error}")
+                    logger.error(f"Error traceback: {traceback.format_exc()}")
+                    # Re-raise to rollback the transaction
+                    raise
+
+            # 4. Create a simple scan record (optional)
+            try:
+                scan_query = """
+                    INSERT INTO Scan (
+                        userID, totalItems, totalWeight, totalPoints, 
+                        scanMethod, uploadStatus, notes, scanAt
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
+                """
+                
+                cursor.execute(scan_query, (
+                    user_id,
+                    round(total_quantity),
+                    round(total_weight, 2),
+                    total_points,
+                    scan_data.get('scanMethod', 'ai'),
+                    'saved',
+                    f"Smart scanner: {items_inserted} items"
+                ))
+                
+                scan_id = cursor.lastrowid
+                logger.info(f"📊 Scan record created: Scan ID {scan_id}")
+                
+                # Update the recycling_transactions with scanID
+                for i in range(items_inserted):
+                    transaction_id = cursor.lastrowid - items_inserted + i + 1
+                    cursor.execute(
+                        "UPDATE recycling_transactions SET scanID = %s WHERE id = %s",
+                        (scan_id, transaction_id)
+                    )
+                
+            except Exception as scan_error:
+                logger.warning(f"⚠️ Error creating scan record: {scan_error}")
+                # Don't fail the transaction if scan record fails
+            
+            # Commit transaction
+            connection.commit()
+            
+            logger.info(f"✅ Transaction committed successfully")
+            logger.info(f"📊 Summary: {items_inserted} items, {total_points} points, {total_weight} kg weight")
+            
+            # Prepare response data
+            response_data = {
+                'success': True,
+                'message': 'Recycling data saved successfully',
+                'totalItems': round(total_quantity),
+                'totalWeight': round(total_weight, 2),
+                'totalPoints': total_points,
+                'itemsCount': items_inserted,
+                'userID': user_id
+            }
+            
+            return jsonify(response_data)
+            
+        except Exception as e:
+            # Rollback transaction on error
+            if connection and connection.is_connected():
+                connection.rollback()
+                logger.error(f"❌ Transaction rolled back due to error: {e}")
+            else:
+                logger.error(f"❌ Cannot rollback - connection not available: {e}")
+            
+            logger.error(f"Error traceback: {traceback.format_exc()}")
+            return jsonify({'success': False, 'error': f'Transaction failed: {str(e)}'}), 500
+            
+    except Exception as e:
+        logger.error(f"❌ Unexpected error in save_recycling_transaction: {e}")
+        logger.error(f"Error traceback: {traceback.format_exc()}")
+        return jsonify({'success': False, 'error': f'Unexpected error: {str(e)}'}), 500
+        
+    finally:
+        # Safely close cursor and connection
+        try:
+            if cursor:
+                cursor.close()
+                logger.debug("✅ Cursor closed")
+        except Exception as cursor_error:
+            logger.warning(f"⚠️ Error closing cursor: {cursor_error}")
+        
+        try:
+            if connection and connection.is_connected():
+                connection.close()
+                logger.debug("✅ Connection closed")
+        except Exception as conn_error:
+            logger.warning(f"⚠️ Error closing connection: {conn_error}")
 
 # ============ CAMPAIGN ANALYTICS ENDPOINTS ============
 
@@ -2172,8 +4815,8 @@ def test_connection():
         'message': 'Server is running!',
         'timestamp': datetime.now().isoformat(),
         'server_info': {
-            'local_url': 'http://localhost:5000',
-            'network_url': f'http://{local_ip}:5000',
+            'local_url': 'http://localhost:3000',
+            'network_url': f'http://{local_ip}:3000',
             'ai_model_loaded': interpreter is not None
         }
     })
@@ -3218,6 +5861,7 @@ def get_uploaded_file(filename):
 # Load model when server starts
 model_loaded = load_model()
 
+
 if __name__ == '__main__':
     # Get local IP address
     local_ip = get_local_ip()
@@ -3231,11 +5875,29 @@ if __name__ == '__main__':
     else:
         print("🟡 Using mock AI detection mode")
     
+    # Initialize database pool
+    if init_db_pool():
+        print("✅ Database connection pool initialized")
+    else:
+        print("⚠️ Database connection pool initialization failed, using direct connections")
+    
+    # Initialize scheduler
+    start_scheduled_tasks()
+    
+    print("\n⏰ SCHEDULED TASKS:")
+    if scheduler:  # Now this checks the global scheduler
+        print("   ✅ Scheduled tasks running")
+        print("   • Daily reminders at 9:00 AM")
+        print("   • Weekly summaries on Sundays at 8:00 PM")
+        print("   • Monthly promotions on 1st at 10:00 AM")
+    else:
+        print("   ⚠️ Scheduled tasks disabled")
+    
     print(f"\n🌐 Computer IP Address: {local_ip}")
     print("\n🔗 CONNECTION METHODS:")
-    print("   For USB Debugging: http://localhost:5000")
-    print("   For WiFi Network:  http://" + local_ip + ":5000")
-    print("   For Android Emulator: http://10.0.2.2:5000")
+    print("   For USB Debugging: http://localhost:3000")
+    print("   For WiFi Network:  http://" + local_ip + ":3000")
+    print("   For Android Emulator: http://10.0.2.2:3000")
     
     print("\n📊 DATABASE STATUS:")
     if get_db_connection():
@@ -3247,8 +5909,8 @@ if __name__ == '__main__':
     print("\n📱 REACT NATIVE SETUP:")
     print("   1. Connect phone via USB")
     print("   2. Enable USB Debugging on phone")
-    print("   3. Run: adb reverse tcp:5000 tcp:5000")
-    print("   4. In React Native app, use: http://localhost:5000")
+    print("   3. Run: adb reverse tcp:3000 tcp:3000")
+    print("   4. In React Native app, use: http://localhost:3000")
     
     print("\n🔧 API ENDPOINTS:")
     print("   GET  /api/server-info  - Server information")
@@ -3263,8 +5925,8 @@ if __name__ == '__main__':
     print("   DELETE /api/reports/<id> - Delete a report")
     
     print("\n" + "=" * 60)
-    print("💡 TIP: Test server with: curl http://localhost:5000/api/test")
+    print("💡 TIP: Test server with: curl http://localhost:3000/api/test")
     print("=" * 60 + "\n")
     
     # Start server with all interfaces
-    app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)
+    app.run(host='0.0.0.0', port=3000, debug=True, threaded=True)
