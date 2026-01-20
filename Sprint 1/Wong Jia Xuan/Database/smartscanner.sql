@@ -41,8 +41,6 @@ CREATE TABLE recycling_transactions (
     scanID INT,
     location VARCHAR(100),
     transaction_date DATE NOT NULL,
-    status ENUM('finalized', 'corrected', 'pending') DEFAULT 'finalized',
-    scan_method ENUM('camera', 'gallery', 'manual', 'ai') DEFAULT 'camera',
     recyclable BOOLEAN DEFAULT TRUE,
     confidence FLOAT DEFAULT 0.0,
     manual_entry BOOLEAN DEFAULT FALSE,
