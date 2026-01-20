@@ -34,14 +34,14 @@ CREATE TABLE Scan (
 CREATE TABLE recycling_transactions (
     id INT PRIMARY KEY AUTO_INCREMENT,
     userID VARCHAR(36) NOT NULL,
-    material_type ENUM('plastic', 'paper', 'glass', 'metal') NOT NULL,
+    scanID INT NOT NULL,
+    materialID INT NOT NULL,
     quantity DECIMAL(10,2) NOT NULL,
     points_earned INT NOT NULL,
     weight DECIMAL(10,2) DEFAULT 0.00,
     scanID INT,
     location VARCHAR(100),
     transaction_date DATE NOT NULL,
-    recyclable BOOLEAN DEFAULT TRUE,
     confidence FLOAT DEFAULT 0.0,
     manual_entry BOOLEAN DEFAULT FALSE,
     ai_detected BOOLEAN DEFAULT TRUE,
@@ -75,18 +75,4 @@ CREATE TABLE UploadedImage (
     INDEX idx_image_scan (scanID),
     INDEX idx_image_user (userID),
     INDEX idx_image_date (uploadAt)
-);
-
-CREATE TABLE ScanAudit (
-    auditID INT PRIMARY KEY AUTO_INCREMENT,
-    scanID INT NOT NULL,
-    userID VARCHAR(36) NOT NULL,
-    actionType ENUM('create', 'update', 'delete', 'correct', 'finalize') NOT NULL,
-    actionDetails JSON,
-    performedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    performedBy VARCHAR(36) NOT NULL,
-    FOREIGN KEY (scanID) REFERENCES Scan(scanID) ON DELETE CASCADE,
-    FOREIGN KEY (userID) REFERENCES User(userID) ON DELETE CASCADE,
-    FOREIGN KEY (performedBy) REFERENCES User(userID) ON DELETE CASCADE,
-    INDEX idx_scan_audit (scanID, performedAt)
 );
