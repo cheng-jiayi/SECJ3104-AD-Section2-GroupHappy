@@ -211,10 +211,36 @@
         <li>Meeting Stakeholders</li>
       </ul>
     </td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
+    <td>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/eventManagement/screens/EventList.js">Event List</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/eventManagement/screens/EventForm.js">Event Form</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/eventManagement/screens/EditEvent.js">Edit Event</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/Ecomap/screens/EcoMapScreen.js">Eco Map Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/Ecomap/screens/ReportScreen.js">Report Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/Ecomap/screens/FilterScreen.js">Filter Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/DecisionMaking/screens/ModuleDashboard.js">Decision Making Dashboard</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/DecisionMaking/screens/PredictTrends.js">Trends Prediction Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/DecisionMaking/screens/EngagementAnalysis.js">Engagement Analysis</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/DecisionMaking/screens/SustainabilityInsights.js">Sustainability Insights</a></li>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/js%20backend/server.js">Server.js</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/js%20backend/controllers/advancedAnalyticsController.js">Advanced Analytics Controller</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/js%20backend/routes/events.js">Events Routes</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/js%20backend/models/advancedAnalyticsModel.js">Advanced Analytics Model</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/js%20backend/routes/advancedAnalyticsRoutes.js">Advanced Analytics Routes</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/js%20backend/db.js">Database Settings</a></li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/sql/Table.sql">All Table SQL</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/sql/EventAndParticipation.sql">Event Management SQL</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/sql/EcoMap.sql">Eco Map SQL</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/sql/DecisionSupport.sql">Advanced Analytics and Decision Support SQL</a></li>
+      </ul>
+    </td>
   </tr>
 </table>
 
