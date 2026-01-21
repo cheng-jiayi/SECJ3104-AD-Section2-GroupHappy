@@ -205,14 +205,12 @@
   </tr>
   <tr>
     <td>4</td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-  </tr>
-  <tr>
-    <td>5</td>
+    <td>Integration Sprint  
+      <ul>
+        <li>Backend Integration</li>
+        <li>Meeting Stakeholders</li>
+      </ul>
+    </td>
     <td></td>
     <td></td>
     <td></td>
