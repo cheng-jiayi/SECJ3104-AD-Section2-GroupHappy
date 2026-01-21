@@ -2939,290 +2939,10 @@ def model_info():
         'classes': CLASS_NAMES
     })
 
-@app.route('/api/scanner/save-scan', methods=['POST'])
-def save_scan_to_database():
-    """Save scanner data to database - FIXED VERSION with proper connection handling"""
-    connection = None
-    cursor = None
-    
-    try:
-        data = request.get_json()
-        logger.info("📤 Received scanner data for saving to database")
-        
-        if not data:
-            return jsonify({'success': False, 'error': 'No data provided'}), 400
-        
-        # Extract data
-        scan_data = data.get('scan', {})
-        items_data = data.get('items', [])
-        uploaded_image = data.get('uploadedImage')
-        
-        # Validate required fields
-        if not scan_data.get('userID'):
-            logger.error("❌ Missing userID in scan data")
-            return jsonify({'success': False, 'error': 'userID is required'}), 400
-        
-        user_id = scan_data['userID']
-        
-        # Debug log
-        logger.info(f"💾 Saving scan for user: {user_id}")
-        logger.info(f"📊 Scan data: {scan_data}")
-        logger.info(f"📦 Items count: {len(items_data)}")
-        
-        # Get database connection
-        try:
-            connection = get_db_connection()
-            if not connection:
-                logger.error("❌ Database connection failed")
-                return jsonify({'success': False, 'error': 'Database connection failed'}), 500
-        except Exception as conn_error:
-            logger.error(f"❌ Failed to get database connection: {conn_error}")
-            return jsonify({'success': False, 'error': 'Database connection error'}), 500
-        
-        cursor = connection.cursor(dictionary=True)
-        
-        # Start transaction
-        connection.start_transaction()
-        
-        try:
-            # 1. First, verify the user exists
-            cursor.execute("SELECT userID FROM User WHERE userID = %s", (user_id,))
-            user = cursor.fetchone()
-            
-            if not user:
-                logger.error(f"❌ User not found: {user_id}")
-                raise Exception(f"User {user_id} not found in database")
-            
-            # 2. Insert into Scan table
-            scan_query = """
-                INSERT INTO Scan (
-                    userID, totalItems, totalWeight, totalPoints, 
-                    scanMethod, uploadStatus, notes, scanAt
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
-            """
-            
-            cursor.execute(scan_query, (
-                user_id,
-                safe_int(scan_data.get('totalItems', 0)),
-                safe_float(scan_data.get('totalWeight', 0)),
-                safe_int(scan_data.get('totalPoints', 0)),
-                scan_data.get('scanMethod', 'ai'),
-                scan_data.get('uploadStatus', 'saved'),
-                scan_data.get('notes', 'Recyclable items scan')
-            ))
-            
-            scan_id = cursor.lastrowid
-            logger.info(f"✅ Scan inserted. Scan ID: {scan_id}")
-            
-            # 3. Get material IDs for each item type
-            material_ids = {}
-            try:
-                cursor.execute("SELECT materialID, materialClass FROM MaterialType")
-                materials = cursor.fetchall()
-                for material in materials:
-                    material_ids[material['materialClass'].lower()] = material['materialID']
-            except Exception as mat_error:
-                logger.warning(f"⚠️ Error fetching material types: {mat_error}")
-                # Use default mapping as fallback
-                material_ids = {
-                    'plastic': 1, 'glass': 2, 'metal': 3, 
-                    'paper': 4, 'non-recyclable': 5, 'tyre': 6
-                }
-            
-            logger.info(f"📋 Material IDs: {material_ids}")
-            
-            # 4. Insert recycling transactions
-            items_inserted = 0
-            for item in items_data:
-                material_type = item.get('materialType', '').lower()
-                
-                # Map to allowed material types (plastic, paper, glass, metal)
-                allowed_materials = ['plastic', 'paper', 'glass', 'metal']
-                if material_type not in allowed_materials:
-                    # Map other materials to allowed types
-                    if material_type in ['tyre', 'non-recyclable']:
-                        material_type = 'plastic'  # Default to plastic for non-standard items
-                    else:
-                        material_type = 'plastic'  # Default fallback
-                
-                transaction_query = """
-                    INSERT INTO recycling_transactions (
-                        user_id, material_type, quantity, points_earned,
-                        weight, scan_id, transaction_date, status,
-                        scan_method, recyclable, confidence, manual_entry,
-                        ai_detected, corrected, created_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
-                """
-                
-                cursor.execute(transaction_query, (
-                    user_id,
-                    material_type,
-                    safe_float(item.get('quantity', 0)),
-                    safe_int(item.get('pointsEarned', 0)),
-                    safe_float(item.get('weight', 0)),
-                    scan_id,
-                    datetime.now().date(),  # Use current date
-                    item.get('status', 'finalized').lower(),
-                    scan_data.get('scanMethod', 'ai'),
-                    bool(item.get('recyclabilityStatus', True)),
-                    safe_float(item.get('confidence', 1.0)),
-                    bool(item.get('manual', False)),
-                    bool(item.get('aiDetected', True)),
-                    bool(item.get('corrected', False))
-                ))
-                items_inserted += 1
-            
-            # 5. Insert uploaded image if available
-            image_id = None
-            if uploaded_image:
-                try:
-                    image_query = """
-                        INSERT INTO UploadedImage (
-                            scanID, userID, imagePath, imageType,
-                            annotationStatus, aiConfidence, aiDetectedClasses
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s)
-                    """
-                    
-                    ai_detected_classes = uploaded_image.get('aiDetectedClasses', [])
-                    if not isinstance(ai_detected_classes, str):
-                        ai_detected_classes = json.dumps(ai_detected_classes)
-                    
-                    cursor.execute(image_query, (
-                        scan_id,
-                        user_id,
-                        uploaded_image.get('imagePath', ''),
-                        uploaded_image.get('imageType', 'scan'),
-                        bool(uploaded_image.get('annotationStatus', False)),
-                        safe_float(uploaded_image.get('aiConfidence', 0)),
-                        ai_detected_classes
-                    ))
-                    image_id = cursor.lastrowid
-                    logger.info(f"🖼️ Image inserted. Image ID: {image_id}")
-                except Exception as img_error:
-                    logger.warning(f"⚠️ Error saving image: {img_error}")
-                    # Continue without image - don't fail the whole transaction
-            
-            # 6. Update Student table if the user is a student
-            try:
-                cursor.execute("""
-                    SELECT s.studentID, s.totalPoints, s.totalItemsRecycled, s.totalWeightRecycled
-                    FROM Student s
-                    JOIN User u ON s.userID = u.userID
-                    WHERE u.userID = %s
-                """, (user_id,))
-                
-                student = cursor.fetchone()
-                
-                if student:
-                    logger.info(f"🎓 Updating student stats for {student['studentID']}")
-                    update_student_query = """
-                        UPDATE Student 
-                        SET 
-                            totalPoints = totalPoints + %s,
-                            totalItemsRecycled = totalItemsRecycled + %s,
-                            totalWeightRecycled = totalWeightRecycled + %s
-                        WHERE studentID = %s
-                    """
-                    
-                    cursor.execute(update_student_query, (
-                        safe_int(scan_data.get('totalPoints', 0)),
-                        safe_int(scan_data.get('totalItems', 0)),
-                        safe_float(scan_data.get('totalWeight', 0)),
-                        student['studentID']
-                    ))
-                    logger.info(f"✅ Student stats updated: +{scan_data.get('totalPoints', 0)} points")
-            
-            except Exception as student_error:
-                logger.warning(f"⚠️ Error updating student stats: {student_error}")
-                # Continue anyway - student stats update is optional
-            
-           
-            # 7. Create audit log
-            try:
-                audit_query = """
-                    INSERT INTO ScanAudit (
-                        scanID, userID, actionType, actionDetails, performedBy
-                    ) VALUES (%s, %s, %s, %s, %s)
-                """
-                
-                action_details = {
-                    'scanID': scan_id,
-                    'totalItems': safe_int(scan_data.get('totalItems', 0)),
-                    'totalWeight': safe_float(scan_data.get('totalWeight', 0)),
-                    'totalPoints': safe_int(scan_data.get('totalPoints', 0)),
-                    'itemsCount': len(items_data),
-                    'hasImage': uploaded_image is not None
-                }
-                
-                cursor.execute(audit_query, (
-                    scan_id,
-                    user_id,
-                    'create',
-                    json.dumps(action_details),
-                    user_id
-                ))
-            except Exception as audit_error:
-                logger.warning(f"⚠️ Error creating audit log: {audit_error}")
-                # Continue anyway - audit log is optional
-            
-            # Commit transaction
-            connection.commit()
-            
-            logger.info(f"✅ Transaction committed successfully")
-            
-            # Prepare response data
-            response_data = {
-                'success': True,
-                'scanID': scan_id,
-                'totalItems': safe_int(scan_data.get('totalItems', 0)),
-                'totalWeight': safe_float(scan_data.get('totalWeight', 0)),
-                'totalPoints': safe_int(scan_data.get('totalPoints', 0)),
-                'itemsCount': items_inserted,
-                'imageID': image_id,
-                'message': 'Scan data saved successfully to database'
-            }
-            
-            logger.info(f"✅ Scan saved successfully! Response: {response_data}")
-            
-            return jsonify(response_data)
-            
-        except Exception as e:
-            # Rollback transaction on error
-            if connection and connection.is_connected():
-                connection.rollback()
-                logger.error(f"❌ Transaction rolled back due to error: {e}")
-            else:
-                logger.error(f"❌ Cannot rollback - connection not available: {e}")
-            
-            logger.error(f"Error traceback: {traceback.format_exc()}")
-            return jsonify({'success': False, 'error': f'Transaction failed: {str(e)}'}), 500
-            
-    except Exception as e:
-        logger.error(f"❌ Unexpected error in save_scan_to_database: {e}")
-        logger.error(f"Error traceback: {traceback.format_exc()}")
-        return jsonify({'success': False, 'error': f'Unexpected error: {str(e)}'}), 500
-        
-    finally:
-        # Safely close cursor and connection
-        try:
-            if cursor:
-                cursor.close()
-                logger.debug("✅ Cursor closed")
-        except Exception as cursor_error:
-            logger.warning(f"⚠️ Error closing cursor: {cursor_error}")
-        
-        try:
-            if connection and connection.is_connected():
-                connection.close()
-                logger.debug("✅ Connection closed")
-        except Exception as conn_error:
-            logger.warning(f"⚠️ Error closing connection: {conn_error}")
-
-# ============ NEW ENDPOINT FOR SMART SCANNER ============
 
 @app.route('/api/save-recycling-transaction', methods=['POST'])
 def save_recycling_transaction():
-    """Save recycling data from smart scanner to recycling_transactions table - MATCHING YOUR TABLE STRUCTURE"""
+    """Save recycling data from smart scanner to recycling_transactions table - UPDATED"""
     connection = None
     cursor = None
     
@@ -3237,6 +2957,7 @@ def save_recycling_transaction():
         user_id = data.get('userID')
         items = data.get('items', [])
         scan_data = data.get('scanData', {})
+        location = scan_data.get('location', 'Unknown')
         
         # Validate required fields
         if not user_id:
@@ -3275,12 +2996,49 @@ def save_recycling_transaction():
             
             logger.info(f"✅ User verified: {user['userID']} ({user['role']})")
             
+            # 2. FIRST create Scan record (to get scanID)
             items_inserted = 0
             total_points = 0
             total_weight = 0
             total_quantity = 0
             
-            # 2. Insert each item into recycling_transactions table
+            # Calculate totals first
+            for item in items:
+                total_points += safe_int(item.get('points_earned', 0))
+                total_weight += safe_float(item.get('weight', 0))
+                total_quantity += safe_float(item.get('quantity', 0))
+            
+            # Create Scan record
+            scan_query = """
+                INSERT INTO Scan (
+                    userID, totalItems, totalWeight, totalPoints, 
+                    scanMethod, uploadStatus, notes, scanAt
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
+            """
+            
+            cursor.execute(scan_query, (
+                user_id,
+                round(total_quantity),
+                round(total_weight, 2),
+                total_points,
+                scan_data.get('scanMethod', 'ai'),
+                'saved',
+                f"Smart scanner: {len(items)} items"
+            ))
+            
+            scan_id = cursor.lastrowid
+            logger.info(f"📊 Scan record created: Scan ID {scan_id}")
+            
+            # 3. Get materialID mapping from MaterialType table
+            material_mapping = {}
+            cursor.execute("SELECT materialID, materialName, materialClass FROM MaterialType")
+            for material in cursor.fetchall():
+                material_mapping[material['materialName'].lower()] = material['materialID']
+                material_mapping[material['materialClass'].lower()] = material['materialID']
+            
+            logger.info(f"📋 Material mapping: {material_mapping}")
+            
+            # 4. Insert each item into recycling_transactions table
             for item in items:
                 # Validate required fields
                 required_fields = ['material_type', 'quantity', 'points_earned']
@@ -3289,35 +3047,36 @@ def save_recycling_transaction():
                         logger.error(f"❌ Missing required field: {field}")
                         raise Exception(f"Missing required field: {field}")
                 
-                # Ensure material_type is lowercase (matches ENUM)
+                # Get material_type and materialID
                 material_type = item['material_type'].lower()
                 
-                # Map to allowed material types
-                allowed_materials = ['plastic', 'paper', 'glass', 'metal']
-                if material_type not in allowed_materials:
-                    logger.warning(f"⚠️ Material type '{material_type}' not in allowed list. Defaulting to 'plastic'")
-                    material_type = 'plastic'  # Default fallback
+                # Get materialID from mapping
+                material_id = material_mapping.get(material_type)
+                if not material_id:
+                    logger.warning(f"⚠️ Material type '{material_type}' not found in MaterialType. Using default.")
+                    # Use plastic as default
+                    material_id = material_mapping.get('plastic', 2)  # plastic is usually materialID 2
                 
-                # Insert into recycling_transactions table
+                # Insert into recycling_transactions table - CORRECTED VERSION
                 transaction_query = """
                     INSERT INTO recycling_transactions (
-                        userID, material_type, quantity, points_earned,
-                        weight, transaction_date, status,
-                        scan_method, recyclable, confidence, manual_entry,
-                        ai_detected, corrected, created_at
+                        userID, scanID, materialID, material_type, quantity, points_earned,
+                        weight, location, transaction_date, confidence,
+                        manual_entry, ai_detected, corrected, created_at
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                    -- Removed: status, scan_method, recyclable (they're in Scan table or MaterialType)
                 """
                 
                 cursor.execute(transaction_query, (
                     user_id,
-                    material_type,
+                    scan_id,  # From Scan record
+                    material_id,  # From MaterialType table
+                    material_type,  # Original material type
                     safe_float(item.get('quantity', 0)),
                     safe_int(item.get('points_earned', 0)),
                     safe_float(item.get('weight', 0)),
+                    location,
                     item.get('transaction_date', datetime.now().date()),
-                    item.get('status', 'finalized'),
-                    item.get('scan_method', scan_data.get('scanMethod', 'ai')),
-                    bool(item.get('recyclable', True)),
                     safe_float(item.get('confidence', 1.0)),
                     bool(item.get('manual_entry', False)),
                     bool(item.get('ai_detected', True)),
@@ -3325,20 +3084,16 @@ def save_recycling_transaction():
                 ))
                 
                 items_inserted += 1
-                total_points += safe_int(item.get('points_earned', 0))
-                total_weight += safe_float(item.get('weight', 0))
-                total_quantity += safe_float(item.get('quantity', 0))
-                
-                logger.info(f"✅ Inserted: {material_type} - {item.get('quantity')} units - {item.get('points_earned')} points")
+                logger.info(f"✅ Inserted transaction: {material_type} - {item.get('quantity')} units")
             
-            # 3. Update Student table if the user is a student
+            # 5. Update Student table if the user is a student
             if user['role'] == 'student':
                 try:
                     logger.info("🎓 Updating student stats...")
                     
-                    # FIRST: Get the student's studentID using userID
+                    # Get the student's studentID using userID
                     cursor.execute("""
-                        SELECT studentID, totalPoints, totalItemsRecycled, totalWeightRecycled, totalMerits
+                        SELECT studentID, totalPoints, totalItemsRecycled, totalWeightRecycled
                         FROM Student 
                         WHERE userID = %s
                     """, (user_id,))
@@ -3358,12 +3113,12 @@ def save_recycling_transaction():
                         user_info = cursor.fetchone()
                         
                         if user_info:
-                            # Create student ID from UTM ID (or generate one)
-                            student_id = user_info['utmID']
+                            # Create student ID from UTM ID
+                            student_id = user_info['utmID'] if user_info['utmID'] else f"STU{user_id[-6:]}"
                             
                             logger.info(f"🔄 Creating missing student record: {student_id}")
                             
-                            # Insert new student record with default values
+                            # Insert new student record
                             insert_student_query = """
                                 INSERT INTO Student (
                                     studentID, userID, totalPoints, totalMerits,
@@ -3372,112 +3127,64 @@ def save_recycling_transaction():
                             """
                             
                             cursor.execute(insert_student_query, (
-                                student_id,      # studentID
-                                user_id,         # userID
-                                0,               # totalPoints
-                                0,               # totalMerits
-                                0,               # totalItemsRecycled
-                                0.0,             # totalWeightRecycled
-                                'FSSH',          # faculty (default)
-                                1                # yearOfStudy (default)
+                                student_id, user_id, 0, 0, 0, 0.0, 'FSSH', 1
                             ))
-                            
-                            logger.info(f"✅ Created new student record with ID: {student_id}")
                             
                             # Re-fetch the newly created student
                             cursor.execute("SELECT studentID FROM Student WHERE userID = %s", (user_id,))
                             student = cursor.fetchone()
-                        else:
-                            raise Exception(f"User {user_id} not found - cannot create student record")
                     
                     student_id = student['studentID']
-                    logger.info(f"✅ Found student: {student_id} for user: {user_id}")
                     
-                    # Calculate merits (you can adjust this logic)
-                    # In your database, merits might be different from points
-                    merits_to_add = total_points  # Or use a different calculation if needed
-                    
-                    # Update Student table using studentID as primary key
+                    # Update Student table
                     update_student_query = """
                         UPDATE Student 
                         SET 
                             totalPoints = totalPoints + %s,
                             totalItemsRecycled = totalItemsRecycled + %s,
-                            totalWeightRecycled = totalWeightRecycled + %s,
-                            totalMerits = totalMerits + %s
+                            totalWeightRecycled = totalWeightRecycled + %s
                         WHERE studentID = %s
                     """
                     
-                    update_values = (
-                        total_points,           # Points to add
-                        round(total_quantity),  # Items to add (rounded to nearest integer)
-                        total_weight,           # Weight to add
-                        merits_to_add,          # Merits to add
-                        student_id              # WHERE clause uses studentID
-                    )
+                    cursor.execute(update_student_query, (
+                        total_points,
+                        round(total_quantity),
+                        total_weight,
+                        student_id
+                    ))
                     
-                    cursor.execute(update_student_query, update_values)
-                    rows_affected = cursor.rowcount
-                    
-                    if rows_affected > 0:
-                        logger.info(f"✅ Student {student_id} updated: +{total_points} points, +{round(total_quantity)} items")
-                        
-                        # Get and log the updated totals
-                        cursor.execute("""
-                            SELECT totalPoints, totalItemsRecycled, totalWeightRecycled, totalMerits
-                            FROM Student 
-                            WHERE studentID = %s
-                        """, (student_id,))
-                        
-                        updated_student = cursor.fetchone()
-                        if updated_student:
-                            logger.info(f"📈 New totals - Points: {updated_student['totalPoints']}, "
-                                    f"Items: {updated_student['totalItemsRecycled']}, "
-                                    f"Weight: {updated_student['totalWeightRecycled']}, "
-                                    f"Merits: {updated_student['totalMerits']}")
-                    else:
-                        logger.error(f"❌ Student update failed for studentID: {student_id}")
-                        raise Exception(f"Failed to update student {student_id}")
+                    logger.info(f"✅ Student {student_id} updated: +{total_points} points")
                     
                 except Exception as student_error:
                     logger.error(f"❌ Error updating student stats: {student_error}")
-                    logger.error(f"Error traceback: {traceback.format_exc()}")
-                    # Re-raise to rollback the transaction
-                    raise
-
-            # 4. Create a simple scan record (optional)
+                    # Continue anyway - don't fail the whole transaction
+            
+            # 6. Create audit log (optional)
             try:
-                scan_query = """
-                    INSERT INTO Scan (
-                        userID, totalItems, totalWeight, totalPoints, 
-                        scanMethod, uploadStatus, notes, scanAt
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
+                audit_query = """
+                    INSERT INTO ScanAudit (
+                        scanID, userID, actionType, actionDetails, performedBy, performedAt
+                    ) VALUES (%s, %s, %s, %s, %s, NOW())
                 """
                 
-                cursor.execute(scan_query, (
+                action_details = {
+                    'scanID': scan_id,
+                    'itemsCount': items_inserted,
+                    'totalWeight': total_weight,
+                    'totalPoints': total_points,
+                    'method': scan_data.get('scanMethod', 'ai')
+                }
+                
+                cursor.execute(audit_query, (
+                    scan_id,
                     user_id,
-                    round(total_quantity),
-                    round(total_weight, 2),
-                    total_points,
-                    scan_data.get('scanMethod', 'ai'),
-                    'saved',
-                    f"Smart scanner: {items_inserted} items"
+                    'create_transaction',
+                    json.dumps(action_details),
+                    user_id
                 ))
-                
-                scan_id = cursor.lastrowid
-                logger.info(f"📊 Scan record created: Scan ID {scan_id}")
-                
-                # Update the recycling_transactions with scanID
-                for i in range(items_inserted):
-                    transaction_id = cursor.lastrowid - items_inserted + i + 1
-                    cursor.execute(
-                        "UPDATE recycling_transactions SET scanID = %s WHERE id = %s",
-                        (scan_id, transaction_id)
-                    )
-                
-            except Exception as scan_error:
-                logger.warning(f"⚠️ Error creating scan record: {scan_error}")
-                # Don't fail the transaction if scan record fails
+                logger.info(f"📝 Audit log created for scan {scan_id}")
+            except Exception as audit_error:
+                logger.warning(f"⚠️ Error creating audit log: {audit_error}")
             
             # Commit transaction
             connection.commit()
@@ -3489,6 +3196,7 @@ def save_recycling_transaction():
             response_data = {
                 'success': True,
                 'message': 'Recycling data saved successfully',
+                'scanID': scan_id,
                 'totalItems': round(total_quantity),
                 'totalWeight': round(total_weight, 2),
                 'totalPoints': total_points,
@@ -3519,16 +3227,14 @@ def save_recycling_transaction():
         try:
             if cursor:
                 cursor.close()
-                logger.debug("✅ Cursor closed")
-        except Exception as cursor_error:
-            logger.warning(f"⚠️ Error closing cursor: {cursor_error}")
+        except:
+            pass
         
         try:
             if connection and connection.is_connected():
                 connection.close()
-                logger.debug("✅ Connection closed")
-        except Exception as conn_error:
-            logger.warning(f"⚠️ Error closing connection: {conn_error}")
+        except:
+            pass
 
 # ============ CAMPAIGN ANALYTICS ENDPOINTS ============
 
