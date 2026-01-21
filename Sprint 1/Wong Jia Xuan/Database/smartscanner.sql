@@ -39,7 +39,6 @@ CREATE TABLE recycling_transactions (
     quantity DECIMAL(10,2) NOT NULL,
     points_earned INT NOT NULL,
     weight DECIMAL(10,2) DEFAULT 0.00,
-    scanID INT,
     location VARCHAR(100),
     transaction_date DATE NOT NULL,
     confidence FLOAT DEFAULT 0.0,
