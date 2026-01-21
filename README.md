@@ -212,6 +212,7 @@
       </ul>
     </td>
     <td>
+      <ul>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/eventManagement/screens/EventList.js">Event List</a></li>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/eventManagement/screens/EventForm.js">Event Form</a></li>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/eventManagement/screens/EditEvent.js">Edit Event</a></li>
@@ -222,6 +223,7 @@
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/DecisionMaking/screens/PredictTrends.js">Trends Prediction Screen</a></li>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/DecisionMaking/screens/EngagementAnalysis.js">Engagement Analysis</a></li>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/DecisionMaking/screens/SustainabilityInsights.js">Sustainability Insights</a></li>
+      </ul>
     </td>
     <td>
       <ul>
