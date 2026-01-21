@@ -1,0 +1,18 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index abc123..def456 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -1,5 +1,9 @@
+-buildscript {
+-    ext {
++plugins {
++    id "com.android.library"
++}
++
++android {
++    compileSdk = 33
+         minSdkVersion = 21
+-        compileSdkVersion = 33
+-    }
+-}
++}
