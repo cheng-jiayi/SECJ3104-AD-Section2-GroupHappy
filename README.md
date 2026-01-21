@@ -103,7 +103,7 @@
     </td>
     <td>
       <ul>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/userManagement/LoginScreen.js">Login Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/userManagement/LoginScreen.js">Login Screen (Login as Admin or Student)</a></li>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/userManagement/RegistrationScreen.js">Registration Screen</a></li>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/eventRegistration/screens/eventListScreen.js">Event List (View All Events, Filter By Category, Register for Events, Cancel Registration)</a></li>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/contributionTracking/screens/MyEventsScreen.js">My Events Screen (View Registered Events, Filter By Completion, View Progress on Registered Events, Complete Events)</a></li>
