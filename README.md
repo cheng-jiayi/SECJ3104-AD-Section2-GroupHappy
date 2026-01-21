@@ -93,7 +93,31 @@
       </ul>
     </td>
   </tr>
-  <tr><td>4</td><td></td><td></td><td></td></tr>
+  <tr>
+    <td>4</td>
+    <td>Integration Sprint  
+      <ul>
+        <li>Backend Integration</li>
+        <li>Meeting Stakeholders</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/eventManagement/screens/EventList.js">Event List</a></li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/js%20backend/server.js">Server.js</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/js%20backend/db.js">Database Settings</a></li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/sql/Table.sql">All Table SQL</a></li>
+      </ul>
+    </td>
+  </tr>
 </table>
 
 
