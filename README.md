@@ -391,8 +391,39 @@
       </ul>
     </td>
   </tr>
-  <tr><td>4</td><td></td><td></td><td></td><td></td></tr>
-  <tr><td>5</td><td></td><td></td><td></td><td></td></tr>
+  <tr>
+    <td>4</td>
+    <td>Integration Sprint  
+      <ul>
+        <li>Backend Integration</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/tree/main/Sprint%204/frontend/src/smartScanner">SmartScanner Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/campaignAnalytics/campaignAnalytics.js">Campaign Analytics Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/campaignAnalytics/campaignComparison.js">Campaign Comparison Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/campaignAnalytics/campaignAnalytics.js">Campaign Analytics Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/campaignAnalytics/campaignDetail.js">Campaign Details Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/campaignAnalytics/generateReport.js">Generate Campaign Report Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/homepageManagement/adminHomeScreen.js">Admin Home Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/homepageManagement/studentHomeScreen.js">Student Home Screen</a></li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/py%20backend/server.py">Flask Server (python)</a></li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/sql/Table.sql">All Table SQL</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/sql/SmartScanner.sql">SmartScanner.sql</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/sql/CampaignAnalytics.sql">CampaignAnalytics.sql</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/sql/Homepage.sql">Homepage.sql</a></li>
+      </ul>
+    </td>
+  </tr>
 </table>
 
 <!-- ========================= -->
