@@ -1,17 +1,7 @@
--- ============================================
--- LEADERBOARD & REWARD MODULE - FINAL CLEAN VERSION
--- ============================================
-
 USE utm_remerit;
 
--- ============================================
--- 0. FIX SYSTEM SETTINGS TABLE (ALLOW NULL FOR SYSTEM ENTRIES)
--- ============================================
-
--- Drop existing system_settings if exists
 DROP TABLE IF EXISTS system_settings;
 
--- Create system_settings table
 CREATE TABLE system_settings (
     id INT PRIMARY KEY AUTO_INCREMENT,
     setting_key VARCHAR(100) NOT NULL UNIQUE,
@@ -23,7 +13,6 @@ CREATE TABLE system_settings (
     INDEX idx_setting_key (setting_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Insert default settings
 INSERT INTO system_settings (setting_key, value, description) VALUES
 ('conversion_rate', '100', 'Reward Points needed for 1 Merit Point'),
 ('min_conversion', '100', 'Minimum Reward Points for conversion'),
@@ -40,17 +29,11 @@ INSERT INTO system_settings (setting_key, value, description) VALUES
 ('maintenance_mode', 'false', 'System maintenance status'),
 ('notification_enabled', 'true', 'Enable/disable notifications');
 
--- ============================================
--- 1. FIX CONVERSION HISTORY TABLE (ALLOW NULL FOR SYSTEM ENTRIES)
--- ============================================
-
--- Drop existing conversion_history if exists
 DROP TABLE IF EXISTS conversion_history;
 
--- Create conversion_history table with NULL allowed for student_id
 CREATE TABLE conversion_history (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    student_id VARCHAR(20) NULL, -- CHANGED: ALLOW NULL for system entries
+    student_id VARCHAR(20) NULL, 
     reward_points INT NOT NULL,
     merit_points DECIMAL(10,2) NOT NULL,
     status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
@@ -69,14 +52,8 @@ CREATE TABLE conversion_history (
     INDEX idx_conversion_processed_date (processed_date)
 );
 
--- ============================================
--- 2. CREATE MERIT TRANSACTIONS TABLE
--- ============================================
-
--- Drop existing merit_transactions if exists
 DROP TABLE IF EXISTS merit_transactions;
 
--- Create merit_transactions table
 CREATE TABLE merit_transactions (
     id INT PRIMARY KEY AUTO_INCREMENT,
     student_id VARCHAR(20) NOT NULL,
@@ -89,20 +66,14 @@ CREATE TABLE merit_transactions (
     INDEX idx_merit_date (transaction_date)
 );
 
--- ============================================
--- 3. RESET AND UPDATE SAMPLE STUDENTS DATA
--- ============================================
-
--- Reset all student points first
 UPDATE Student SET 
     totalPoints = 0,
     totalMerits = 0,
     totalItemsRecycled = 0,
     totalWeightRecycled = 0;
 
--- Update John Doe and sample students with fresh data
 UPDATE Student 
-SET totalPoints = 360, totalMerits = 12.5  -- CHANGED: 368 to 360
+SET totalPoints = 360, totalMerits = 12.5  
 WHERE studentID = 'A23CS0001';
 
 UPDATE Student SET 
@@ -137,11 +108,6 @@ UPDATE Student SET
     totalPoints = 1300, totalMerits = 11.0
 WHERE studentID = 'A23CS0003';
 
--- ============================================
--- 4. ADD FRESH RECYCLING TRANSACTIONS
--- ============================================
-
--- Clear old recycling transactions
 DELETE FROM recycling_transactions WHERE userID IN (
     SELECT userID FROM User WHERE utmID IN (
         'A23CS0001', 'A23EN0001', 'A23BU0001', 'A23CS0002', 
@@ -149,23 +115,19 @@ DELETE FROM recycling_transactions WHERE userID IN (
     )
 );
 
--- Add fresh recycling transactions for sample students (last 7 days)
--- John Doe (A23CS0001) - Adjusted to 360 points total (was 636)
 INSERT INTO recycling_transactions (userID, material_type, quantity, points_earned, transaction_date, status) VALUES
--- John Doe - 360 points total
-((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'plastic', 2.0, 40, CURDATE() - INTERVAL 1 DAY, 'finalized'),     -- 40 points
-((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'paper', 1.5, 30, CURDATE() - INTERVAL 2 DAY, 'finalized'),       -- 30 points
-((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'glass', 1.0, 20, CURDATE() - INTERVAL 3 DAY, 'finalized'),       -- 20 points
-((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'metal', 0.5, 10, CURDATE() - INTERVAL 4 DAY, 'finalized'),       -- 10 points
-((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'plastic', 3.0, 60, CURDATE() - INTERVAL 5 DAY, 'finalized'),     -- 60 points
-((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'paper', 2.0, 40, CURDATE() - INTERVAL 6 DAY, 'finalized'),       -- 40 points
-((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'glass', 1.5, 30, CURDATE() - INTERVAL 7 DAY, 'finalized'),       -- 30 points
-((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'plastic', 2.5, 50, CURDATE() - INTERVAL 8 DAY, 'finalized'),     -- 50 points
-((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'paper', 1.0, 20, CURDATE() - INTERVAL 9 DAY, 'finalized'),       -- 20 points
-((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'metal', 0.6, 12, CURDATE() - INTERVAL 10 DAY, 'finalized'),      -- 12 points
-((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'plastic', 2.0, 40, CURDATE() - INTERVAL 11 DAY, 'finalized'),    -- 40 points
+((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'plastic', 2.0, 40, CURDATE() - INTERVAL 1 DAY, 'finalized'),     
+((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'paper', 1.5, 30, CURDATE() - INTERVAL 2 DAY, 'finalized'),      
+((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'glass', 1.0, 20, CURDATE() - INTERVAL 3 DAY, 'finalized'),      
+((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'metal', 0.5, 10, CURDATE() - INTERVAL 4 DAY, 'finalized'),       
+((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'plastic', 3.0, 60, CURDATE() - INTERVAL 5 DAY, 'finalized'),     
+((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'paper', 2.0, 40, CURDATE() - INTERVAL 6 DAY, 'finalized'),     
+((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'glass', 1.5, 30, CURDATE() - INTERVAL 7 DAY, 'finalized'),      
+((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'plastic', 2.5, 50, CURDATE() - INTERVAL 8 DAY, 'finalized'),    
+((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'paper', 1.0, 20, CURDATE() - INTERVAL 9 DAY, 'finalized'),    
+((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'metal', 0.6, 12, CURDATE() - INTERVAL 10 DAY, 'finalized'),     
+((SELECT userID FROM User WHERE utmID = 'A23CS0001'), 'plastic', 2.0, 40, CURDATE() - INTERVAL 11 DAY, 'finalized'),   
 
--- Other sample students (unchanged)
 ((SELECT userID FROM User WHERE utmID = 'A23EN0001'), 'plastic', 4.5, 90, CURDATE() - INTERVAL 1 DAY, 'finalized'),
 ((SELECT userID FROM User WHERE utmID = 'A23EN0001'), 'paper', 3.2, 64, CURDATE() - INTERVAL 2 DAY, 'finalized'),
 ((SELECT userID FROM User WHERE utmID = 'A23BU0001'), 'paper', 6.2, 124, CURDATE() - INTERVAL 1 DAY, 'finalized'),
@@ -183,47 +145,28 @@ INSERT INTO recycling_transactions (userID, material_type, quantity, points_earn
 ((SELECT userID FROM User WHERE utmID = 'A23CS0003'), 'plastic', 5.0, 100, CURDATE() - INTERVAL 1 DAY, 'finalized'),
 ((SELECT userID FROM User WHERE utmID = 'A23CS0003'), 'metal', 1.5, 30, CURDATE() - INTERVAL 4 DAY, 'finalized');
 
--- ============================================
--- 5. INSERT FRESH CONVERSION HISTORY DATA
--- ============================================
-
--- Clear all conversion history
 TRUNCATE TABLE conversion_history;
 
--- Add fresh conversion history for sample students
--- IMPORTANT: Adjust John Doe's conversion history since he now has only 360 points
 INSERT INTO conversion_history (student_id, reward_points, merit_points, status, request_date, processed_date, processed_by, conversion_rate) VALUES
--- John Doe - Approved conversions (reduced amounts to match 360 total points)
-('A23CS0001', 200, 2.0, 'Approved', DATE_SUB(NOW(), INTERVAL 10 DAY), DATE_SUB(NOW(), INTERVAL 9 DAY), 'ADM001', 100),  -- Reduced from 500
-('A23CS0001', 100, 1.0, 'Approved', DATE_SUB(NOW(), INTERVAL 5 DAY), DATE_SUB(NOW(), INTERVAL 4 DAY), 'ADM002', 100),  -- Reduced from 300
--- John Doe - Pending conversion (reduced to match available points)
-('A23CS0001', 100, 1.0, 'Pending', DATE_SUB(NOW(), INTERVAL 1 DAY), NULL, NULL, 100),  -- Reduced from 200
+('A23CS0001', 200, 2.0, 'Approved', DATE_SUB(NOW(), INTERVAL 10 DAY), DATE_SUB(NOW(), INTERVAL 9 DAY), 'ADM001', 100), 
+('A23CS0001', 100, 1.0, 'Approved', DATE_SUB(NOW(), INTERVAL 5 DAY), DATE_SUB(NOW(), INTERVAL 4 DAY), 'ADM002', 100),  
+('A23CS0001', 100, 1.0, 'Pending', DATE_SUB(NOW(), INTERVAL 1 DAY), NULL, NULL, 100),  
 
--- Other students - Approved conversions
 ('A23EN0001', 250, 2.5, 'Approved', DATE_SUB(NOW(), INTERVAL 8 DAY), DATE_SUB(NOW(), INTERVAL 7 DAY), 'ADM001', 100),
 ('A23BU0001', 100, 1.0, 'Approved', DATE_SUB(NOW(), INTERVAL 12 DAY), DATE_SUB(NOW(), INTERVAL 11 DAY), 'ADM001', 100),
 ('A23CS0002', 300, 3.0, 'Approved', DATE_SUB(NOW(), INTERVAL 6 DAY), DATE_SUB(NOW(), INTERVAL 5 DAY), 'ADM002', 100),
 
--- Other students - Pending conversions (for admin to approve/reject)
 ('A23EN0001', 150, 1.5, 'Pending', DATE_SUB(NOW(), INTERVAL 2 DAY), NULL, NULL, 100),
 ('A23BU0001', 200, 2.0, 'Pending', DATE_SUB(NOW(), INTERVAL 1 DAY), NULL, NULL, 100),
 ('A23CS0002', 100, 1.0, 'Pending', NOW(), NULL, NULL, 100),
 
--- Other students - Rejected conversions
 ('A23SH0001', 150, 1.5, 'Rejected', DATE_SUB(NOW(), INTERVAL 15 DAY), DATE_SUB(NOW(), INTERVAL 14 DAY), 'ADM001', 100),
 ('A23KT0001', 100, 1.0, 'Rejected', DATE_SUB(NOW(), INTERVAL 16 DAY), DATE_SUB(NOW(), INTERVAL 15 DAY), 'ADM002', 100);
 
--- ============================================
--- 6. UPDATE STUDENT POINTS FROM ALL SOURCES
--- ============================================
-
--- Temporary table to calculate total points
 CREATE TEMPORARY TABLE IF NOT EXISTS student_total_calc AS
 SELECT 
     s.studentID,
-    -- Total from recycling transactions
     COALESCE(SUM(rt.points_earned), 0) as recycling_points,
-    -- Approved conversion merits (to be added to totalMerits)
     COALESCE(SUM(CASE WHEN ch.status = 'Approved' THEN ch.merit_points ELSE 0 END), 0) as conversion_merits
 FROM Student s
 JOIN User u ON s.userID = u.userID
@@ -235,7 +178,6 @@ WHERE s.studentID IN (
 )
 GROUP BY s.studentID;
 
--- Update student points and merits
 UPDATE Student s
 JOIN student_total_calc stc ON s.studentID = stc.studentID
 SET 
@@ -254,17 +196,10 @@ SET
         WHERE u.utmID = s.studentID AND rt.status = 'finalized'
     );
 
--- Drop temporary table
 DROP TEMPORARY TABLE IF EXISTS student_total_calc;
 
--- Manually set John Doe's points to exactly 360
 UPDATE Student SET totalPoints = 360 WHERE studentID = 'A23CS0001';
 
--- ============================================
--- 7. CREATE VIEWS FOR LEADERBOARD MODULE
--- ============================================
-
--- Drop existing views
 DROP VIEW IF EXISTS weekly_leaderboard;
 DROP VIEW IF EXISTS hall_of_fame;
 DROP VIEW IF EXISTS student_conversion_summary;
@@ -272,7 +207,6 @@ DROP VIEW IF EXISTS admin_pending_conversions;
 DROP VIEW IF EXISTS admin_conversion_history;
 DROP VIEW IF EXISTS student_dashboard;
 
--- View for weekly leaderboard
 CREATE VIEW weekly_leaderboard AS
 SELECT 
     u.fullName as name,
@@ -301,7 +235,6 @@ WHERE u.role = 'student'
 GROUP BY u.userID, u.fullName, s.studentID, s.faculty, s.yearOfStudy, s.totalPoints, s.totalMerits
 ORDER BY weeklyPoints DESC;
 
--- View for hall of fame (all-time top)
 CREATE VIEW hall_of_fame AS
 SELECT 
     u.fullName as name,
@@ -324,7 +257,6 @@ WHERE u.role = 'student'
 GROUP BY u.userID, u.fullName, s.studentID, s.faculty, s.totalPoints, s.totalMerits, s.yearOfStudy
 ORDER BY s.totalPoints DESC;
 
--- View for admin pending conversions
 CREATE VIEW admin_pending_conversions AS
 SELECT 
     ch.id,
@@ -371,7 +303,6 @@ LEFT JOIN User u2 ON a.userID = u2.userID
 WHERE ch.status IN ('Approved', 'Rejected')
 ORDER BY ch.processed_date DESC;
 
--- View for student dashboard
 CREATE VIEW student_dashboard AS
 SELECT 
     s.studentID,
@@ -392,13 +323,10 @@ JOIN User u ON s.userID = u.userID
 LEFT JOIN weekly_leaderboard wl ON s.studentID = wl.studentID
 WHERE u.role = 'student';
 
--- ============================================
--- 8. CREATE STORED PROCEDURES (FIXED VERSION)
--- ============================================
+
 
 DELIMITER $$
 
--- Procedure to request conversion (FIXED)
 DROP PROCEDURE IF EXISTS RequestConversion$$
 CREATE PROCEDURE RequestConversion(
     IN p_student_id VARCHAR(20),
@@ -411,18 +339,15 @@ BEGIN
     DECLARE v_merit_points DECIMAL(10,2);
     DECLARE v_error_msg VARCHAR(255);
     
-    -- Get conversion settings
     SELECT value INTO v_conversion_rate 
     FROM system_settings WHERE setting_key = 'conversion_rate' LIMIT 1;
     
     SELECT value INTO v_min_conversion 
     FROM system_settings WHERE setting_key = 'min_conversion' LIMIT 1;
-    
-    -- Get student's current points
+
     SELECT totalPoints INTO v_current_points 
     FROM Student WHERE studentID = p_student_id;
-    
-    -- Validate request
+
     IF p_reward_points < v_min_conversion THEN
         SET v_error_msg = CONCAT('Minimum conversion amount is ', v_min_conversion, ' points');
         SIGNAL SQLSTATE '45000' 
@@ -431,10 +356,8 @@ BEGIN
         SIGNAL SQLSTATE '45000' 
         SET MESSAGE_TEXT = 'Insufficient reward points';
     ELSE
-        -- Calculate merit points
         SET v_merit_points = ROUND(p_reward_points / v_conversion_rate, 2);
-        
-        -- Insert conversion request
+
         INSERT INTO conversion_history (
             student_id, 
             reward_points, 
@@ -448,8 +371,7 @@ BEGIN
             'Pending',
             v_conversion_rate
         );
-        
-        -- Deduct reward points immediately
+
         UPDATE Student 
         SET totalPoints = totalPoints - p_reward_points 
         WHERE studentID = p_student_id;
@@ -460,10 +382,6 @@ BEGIN
 END$$
 
 DELIMITER ;
-
--- ============================================
--- 9. VERIFICATION QUERIES
--- ============================================
 
 SELECT '✅ DATABASE CLEANED AND READY FOR USE' as Message;
 SELECT ' ';
@@ -508,13 +426,11 @@ WHERE status = 'Pending'
 ORDER BY request_date;
 
 SELECT '=== TEST CONVERSION REQUEST ===' as Message;
--- Test the conversion procedure with 100 points (should work)
 CALL RequestConversion('A23CS0001', 100);
 
 SELECT '=== FINAL VERIFICATION ===' as Message;
 SELECT 'Database setup complete! All tables, views, and procedures are ready.' as Status;
 
--- Final verification for John Doe's points
 SELECT '=== JOHN DOE FINAL POINTS VERIFICATION ===' as Message;
 SELECT 
     studentID,
