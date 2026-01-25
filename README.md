@@ -551,7 +551,6 @@
         <li>Backend Integration</li>
       </ul>
     </td>
-    <td>
       <td>
       <ul>
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/profileManagement/screens/StudentProfile.js">Student Profile</a></li>
@@ -566,6 +565,14 @@
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/leaderboardAndReward/screens/RewardPointsScreen.js">Reward Points Screen</a></li>
       </ul>
     </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/js%20backend/server.js">Server.js</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/js%20backend/routes/rewardRoutes.js">Reward Routes</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/js%20backend/routes/conversionRoutes.js">Conversion Routes</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/js%20backend/routes/leaderboardRoutes.js">Leaderboard Routes</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/js%20backend/db.js">Database Settings</a></li>
+      </ul>
     </td>
     <td></td>
     <td></td>
