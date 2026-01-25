@@ -546,8 +546,27 @@
   
   <tr>
     <td>4</td>
-    <td></td>
-    <td></td>
+    <td>Integration Sprint  
+      <ul>
+        <li>Backend Integration</li>
+      </ul>
+    </td>
+    <td>
+      <td>
+      <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/profileManagement/screens/StudentProfile.js">Student Profile</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/profileManagement/screens/StudentList.js">Student List</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/profileManagement/screens/ManageAccountSettings.js">Manage Account Settings Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/RecyclingAnalytics/screens/MyPerformanceScreen.js">My Performance Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/RecyclingAnalytics/screens/ComparePerformanceScreen.js">Compare Performance Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/RecyclingAnalytics/screens/CommunityOverviewScreen.js">Community Overview Scree</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/RecyclingAnalytics/screens/RecyclingAnalyticsTabNavigator.js">Recycling Analytics Tab Navigator</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/leaderboardAndReward/screens/LeaderboardScreen.js">Leaderboard Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/leaderboardAndReward/screens/ManageConversionsScreen.js">Manage Conversions Screen</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/frontend/src/leaderboardAndReward/screens/RewardPointsScreen.js">Reward Points Screen</a></li>
+      </ul>
+    </td>
+    </td>
     <td></td>
     <td></td>
   </tr>
