@@ -464,7 +464,7 @@
     </td>
     <td>
       <ul>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Yap%20En%20Thong/backend/database.sql">Database Schema & Queries</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%201/Yap%20En%20Thong/backend/database.sql">Database Schema for Recycling Analytics</a></li>
       </ul>
     </td>
   </tr>
@@ -499,7 +499,7 @@
     </td>
     <td>
       <ul>
-        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/backend/database.sql">Complete Database Schema</a>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%202/Yap%20En%20Thong/backend/database.sql">Complete Database Schema for Profile Management</a>
         </li>
       </ul>
     </td>
@@ -574,7 +574,13 @@
         <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/js%20backend/db.js">Database Settings</a></li>
       </ul>
     </td>
-    <td></td>
-    <td></td>
+    <td>
+        <ul>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/sql/Table.sql">All Table SQL</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/sql/Profile.sql">Profile.sql</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/sql/RecyclingAnalytics.sql">RecyclingAnalytics.sql</a></li>
+        <li><a href="https://github.com/cheng-jiayi/SECJ3104-AD-Section2-GroupHappy/blob/main/Sprint%204/backend/sql/Leaderboard.sql">Leaderboard.sql</a></li>
+      </ul>
+    </td>
   </tr>
 </table>
