@@ -1,7 +1,3 @@
--- ============================================
--- 2. INSERT DEFAULT SETTINGS (Only if not exist)
--- ============================================
-
 INSERT IGNORE INTO DefaultSettings (settingKey, settingValue, description) VALUES
 ('DEFAULT_PASSWORD', 'password123', 'Default password for new users'),
 ('MIN_PASSWORD_LENGTH', '8', 'Minimum password length'),
@@ -9,9 +5,7 @@ INSERT IGNORE INTO DefaultSettings (settingKey, settingValue, description) VALUE
 ('MAX_LOGIN_ATTEMPTS', '5', 'Max failed login attempts'),
 ('UTMID_GENERATION_RULE', 'firstname.lastname', 'UTMID generation format'),
 ('EMAIL_DOMAIN_STUDENT', 'graduate.utm.my', 'Email domain for students'),
-('EMAIL_DOMAIN_ADMIN', 'utm.my', 'Email domain for admin/staff');
-
--- Insert UTMID format examples (only if not exist)
+    
 INSERT IGNORE INTO UTMIDFormatRules (description, exampleName, exampleUTMID, exampleEmail) VALUES
 ('Full name with middle name', 'Ali bin Raj', 'ali.raj', 'ali.raj@graduate.utm.my'),
 ('Single name (no surname)', 'Muhammad', 'muhammad', 'muhammad@graduate.utm.my'),
@@ -21,17 +15,9 @@ INSERT IGNORE INTO UTMIDFormatRules (description, exampleName, exampleUTMID, exa
 
 SELECT '✅ Default settings inserted (if not exist)!' as Message;
 
--- ============================================
--- 3. UPDATE DEMO USERS (Using IGNORE to avoid conflicts)
--- ============================================
-
--- Note: These users may already exist, so we use IGNORE
--- Insert or update Users with proper UTMID format
 INSERT IGNORE INTO User (userID, username, password, fullName, utmID, email, role, contactNumber, address) VALUES
--- Main demo student (Ali bin Raj) - using different ID to avoid conflict
 ('U100', 'ali.raj001', 'hashed_password_1', 'Ali bin Raj', 'ali.raj.test', 'ali.raj.test@graduate.utm.my', 'student', '010-8201396', 'L12a, KTHO, UTM SKUDAI'),
 
--- Additional students with various name formats
 ('U101', 'raj.kumar003', 'hashed_password_2', 'Raj Kumar a/l Maniam', 'raj.kumar.test', 'raj.kumar.test@graduate.utm.my', 'student', '011-23456789', 'Block C, Kolej 2, UTM'),
 ('U102', 'siti.test002', 'hashed_password_3', 'Siti Norhaliza binti Mohd', 'siti.test002', 'siti.test002@graduate.utm.my', 'student', '012-3456789', 'Block A, UTM Residence'),
 ('U103', 'kenji.test107', 'hashed_password_4', 'Kenji Tanaka', 'kenji.test107', 'kenji.test107@graduate.utm.my', 'student', '013-4567890', 'International House, UTM'),
@@ -57,10 +43,6 @@ INSERT IGNORE INTO Student (studentID, userID, faculty, yearOfStudy, totalPoints
 
 SELECT '✅ Test users created (if not exist)!' as Message;
 
--- ============================================
--- 4. INSERT NOTIFICATION PREFERENCES (Only for new users)
--- ============================================
-
 INSERT IGNORE INTO UserNotificationSettings (userID, emailNotifications, pushNotifications, recycleReminders, pointUpdates, promotionalOffers) VALUES
 ('U100', 1, 1, 1, 1, 0),
 ('U101', 1, 1, 1, 1, 0),
@@ -73,7 +55,6 @@ INSERT IGNORE INTO UserNotificationSettings (userID, emailNotifications, pushNot
 ('U108', 1, 1, 0, 1, 1),
 ('U109', 0, 1, 1, 1, 0);
 
--- Also add notification settings for existing admin users if they don't have them
 INSERT IGNORE INTO UserNotificationSettings (userID, emailNotifications, pushNotifications, recycleReminders, pointUpdates, promotionalOffers) 
 SELECT u.userID, 1, 1, 0, 0, 0
 FROM User u
@@ -81,10 +62,6 @@ WHERE u.role = 'admin'
 AND u.userID NOT IN (SELECT userID FROM UserNotificationSettings);
 
 SELECT '✅ Notification preferences set for test users!' as Message;
-
--- ============================================
--- 5. INSERT SAMPLE SESSIONS (For new users only)
--- ============================================
 
 INSERT IGNORE INTO UserSessions (sessionID, userID, deviceInfo, ipAddress) VALUES
 (UUID(), 'U100', 'Android Phone - Samsung Galaxy S23', '192.168.1.101'),
@@ -97,11 +74,6 @@ INSERT IGNORE INTO UserSessions (sessionID, userID, deviceInfo, ipAddress) VALUE
 
 SELECT '✅ Sample sessions created for test users!' as Message;
 
--- ============================================
--- 6. CREATE OR REPLACE VIEWS
--- ============================================
-
--- Drop views if they exist, then recreate
 DROP VIEW IF EXISTS UserAccountSettings;
 DROP VIEW IF EXISTS StudentProfileView;
 
@@ -154,18 +126,12 @@ WHERE u.role = 'student';
 
 SELECT '✅ Views created/replaced!' as Message;
 
--- ============================================
--- 7. CREATE OR REPLACE STORED PROCEDURES
--- ============================================
-
--- Drop existing procedures if they exist
 DROP PROCEDURE IF EXISTS UpdateNotificationPreferences;
 DROP PROCEDURE IF EXISTS LogoutUserFromAllDevices;
 DROP PROCEDURE IF EXISTS ResetUserSettingsToDefault;
 
 DELIMITER $$
 
--- Fixed Procedure to update notification preferences
 CREATE PROCEDURE UpdateNotificationPreferences(
     IN p_userID VARCHAR(36),
     IN p_emailNotifications BOOLEAN,
@@ -176,8 +142,7 @@ CREATE PROCEDURE UpdateNotificationPreferences(
 )
 BEGIN
     DECLARE user_exists INT;
-    
-    -- Check if user exists
+
     SELECT COUNT(*) INTO user_exists FROM User WHERE userID = p_userID;
     
     IF user_exists = 0 THEN
@@ -213,21 +178,18 @@ BEGIN
     SELECT 'Notification preferences updated successfully' as message;
 END$$
 
--- Fixed Procedure to logout user from all devices
 CREATE PROCEDURE LogoutUserFromAllDevices(IN p_userID VARCHAR(36))
 BEGIN
     DECLARE user_exists INT;
     DECLARE sessions_terminated INT;
-    
-    -- Check if user exists
+
     SELECT COUNT(*) INTO user_exists FROM User WHERE userID = p_userID;
     
     IF user_exists = 0 THEN
         SIGNAL SQLSTATE '45000' 
         SET MESSAGE_TEXT = 'User does not exist';
     END IF;
-    
-    -- Log out all active sessions
+
     UPDATE UserSessions 
     SET isActive = FALSE 
     WHERE userID = p_userID AND isActive = TRUE;
@@ -237,27 +199,23 @@ BEGIN
     SELECT CONCAT(sessions_terminated, ' active session(s) terminated') as message;
 END$$
 
--- Fixed Procedure to reset all settings to default
 CREATE PROCEDURE ResetUserSettingsToDefault(IN p_userID VARCHAR(36))
 BEGIN
     DECLARE user_exists INT;
     DECLARE default_password VARCHAR(100);
-    
-    -- Check if user exists
+
     SELECT COUNT(*) INTO user_exists FROM User WHERE userID = p_userID;
     
     IF user_exists = 0 THEN
         SIGNAL SQLSTATE '45000' 
         SET MESSAGE_TEXT = 'User does not exist';
     END IF;
-    
-    -- Get default password
+
     SELECT settingValue INTO default_password 
     FROM DefaultSettings 
     WHERE settingKey = 'DEFAULT_PASSWORD'
     LIMIT 1;
-    
-    -- Reset notification preferences
+
     INSERT INTO UserNotificationSettings (
         userID, 
         emailNotifications, 
@@ -283,18 +241,15 @@ BEGIN
         promotionalOffers = FALSE,
         updatedDateTime = CURRENT_TIMESTAMP;
     
-    -- Reset password to default
     UPDATE User 
     SET password = default_password,
         lastPasswordChange = CURRENT_TIMESTAMP
     WHERE userID = p_userID;
     
-    -- Log out from all devices
     UPDATE UserSessions 
     SET isActive = FALSE 
     WHERE userID = p_userID AND isActive = TRUE;
     
-    -- Record password change in history
     INSERT INTO PasswordHistory (userID, passwordHash)
     VALUES (p_userID, default_password);
     
@@ -305,11 +260,6 @@ DELIMITER ;
 
 SELECT '✅ Stored procedures created/replaced!' as Message;
 
--- ============================================
--- 8. CREATE OR REPLACE TRIGGER
--- ============================================
-
--- Drop existing trigger if exists
 DROP TRIGGER IF EXISTS CreateDefaultNotifications;
 
 DELIMITER $$
@@ -330,20 +280,12 @@ DELIMITER ;
 
 SELECT '✅ Trigger created/replaced!' as Message;
 
--- ============================================
--- 9. TEST THE PROCEDURES WITH TEST USER
--- ============================================
-
--- Test the procedures with our test user
 CALL UpdateNotificationPreferences('U100', 1, 0, 1, 0, 1);
 CALL LogoutUserFromAllDevices('U100');
 CALL ResetUserSettingsToDefault('U100');
 
 SELECT '✅ Test procedures executed!' as Message;
 
--- ============================================
--- 10. VERIFICATION QUERIES
--- ============================================
 
 SELECT '=== PROFILE MODULE DATABASE SETUP COMPLETE ===' as Message;
 SELECT ' ' as Spacer;
